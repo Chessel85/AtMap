@@ -1,0 +1,3 @@
+pandoc "Accessible Atlas documentation.md" -o "Accessible Atlas documentation.html"
+
+pandoc licensing.md -o licensing.html

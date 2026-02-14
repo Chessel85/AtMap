@@ -1,0 +1,22 @@
+OSM data is made available under the Open Database Licence version 1.0 (the ODbL). 
+Accessible Atlas is a derived database of OSM and is therefore also  licensed under this.
+Attribution is satisfied by stating the data is sourced from OpenStreetMap and 
+linking to:
+https://www.openstreetmap.org/copyright
+which describes that the data is available under the Open Database Licence.
+
+
+
+Marine data
+ 
+Creative Commons License This dataset is licensed under a Creative Commons Attribution 4.0 International License.
+We kindly request our users not to make our products available for download elsewhere and to always refer to marineregions.org for the most up-to-date products and services.
+
+
+Creative commons licence link:
+https://creativecommons.org/licenses/by/4.0/
+
+
+To cite this product:
+Flanders Marine Institute (2021). Global Oceans and Seas, version 1. Available online at https://www.marineregions.org/. https://doi.org/10.14284/542
+

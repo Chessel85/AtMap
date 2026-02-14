@@ -1,0 +1,13 @@
+--Belgium is 52411
+--Austria is 16239 
+
+--Belgium and Austria have internal rings outside of main polygon
+UPDATE spt_Polygons
+  SET polygon = ST_MakePolygon( ST_ExteriorRing( polygon ))
+  WHERE
+  ST_NRings( polygon ) > 1 AND NOT ST_IsValid( polygon );
+
+--And a polygon with a self intersection
+UPDATE spt_Polygons
+  SET polygon = ST_Buffer( polygon, 0 )
+  WHERE NOT IsValid( polygon );
