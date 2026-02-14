@@ -27,6 +27,7 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
   -DCMAKE_PREFIX_PATH="C:/Qt/6.9.1/msvc2022_64" ^
   -DSQLITE3_ROOT="C:/Path/To/sqlite3" ^
   -DOSGEO4W_ROOT="C:/OSGeo4W"
+```
 
 ### Option 2: Editing CMakeLists.txt
 
