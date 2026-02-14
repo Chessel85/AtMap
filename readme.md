@@ -39,14 +39,18 @@ If you prefer not to type long commands, you can edit the CMakeLists.txt file di
 
 Then simply run:
 
+```bash
 cmake -B build -S .
+```
 
 
 ## Compiling
 
 Once the configuration is successful, build the project using CMake:
 
+```bash
 cmake --build build --config Release
+```
 
 ## Deployment
 
