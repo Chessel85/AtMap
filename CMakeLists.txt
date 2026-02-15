@@ -5,7 +5,7 @@ project(AtMap LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Confirm if Winndows and give warning if not 
+# Confirm if Windows and give warning if not 
 if(WIN32)
     message(STATUS "Configuring for Windows platform...")
 else()
@@ -35,10 +35,9 @@ set(CMAKE_AUTORCC ON)
 # QT path setup
 # OPTION 1: Manual Override (Uncomment the line below for your local use)
 # set(CMAKE_PREFIX_PATH "C:/Qt/6.9.1/msvc2022_64")
-set(CMAKE_PREFIX_PATH "C:/Qt/6.9.1/msvc2022_64")
 
-# If CMAKE_PREFIX_PATH wasn't set on the command line OR uncommented above, 
-find_package(Qt6 COMPONENTS Core Gui Widgets Sql Positioning QUIET)
+# If CMAKE_PREFIX_PATH was not set on the command line OR uncommented above, 
+find_package(Qt6 COMPONENTS Core Gui Widgets Positioning QUIET)
 if(NOT Qt6_FOUND)
     message(FATAL_ERROR 
         "\n--------------------------------------------------------------------------\n"
@@ -107,7 +106,7 @@ set(PROJECT_SOURCES
 add_executable(AtMap WIN32 ${PROJECT_SOURCES})
 
 # Include Directories (Mapping to your INCLUDEPATH)
-# Check path variabbles are set
+# Check path variables are set
 # Check SQLite3 Path
 if(NOT EXISTS "${SQLITE3_ROOT}/src/sqlite3.h")
     message(FATAL_ERROR "SQLITE3_ROOT is incorrect. Could not find src/sqlite3.h at: ${SQLITE3_ROOT}")
