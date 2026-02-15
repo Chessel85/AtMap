@@ -2,6 +2,8 @@
 
 A screen reader friendly mapping application written in C++ built with the Qt 6, Spatialite, and OSGeo4W libraries.
 
+There is a Windows MSI install package on the Releases page.  Click on the Releases heading below and then search the page for 'Assets' and arrow down to the AtMapSetup.msi link.
+
 ## Prerequisites
 
 Before building this project, ensure the following are installed:
