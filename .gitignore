@@ -34,3 +34,4 @@ Desktop.ini
 CMake run.txt
 Hello11.pro
 *.db
+CMakeUserPresets.json
