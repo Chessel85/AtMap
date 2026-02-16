@@ -100,10 +100,11 @@ set(PROJECT_SOURCES
     LandDB.h
     WaterDB.h
     aliases.h
+    AtMap.rc
 )
 
 # Create the Executable
-add_executable(AtMap WIN32 ${PROJECT_SOURCES})
+qt_add_executable(AtMap WIN32 ${PROJECT_SOURCES})
 
 # Include Directories (Mapping to your INCLUDEPATH)
 # Check path variables are set
