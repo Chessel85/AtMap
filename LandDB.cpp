@@ -165,6 +165,58 @@ NRList    CLandDB::FullListOfOSMLand(double x, double y)
     return slLand;
 }
 
+int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults )
+{
+    int retval = 0;
+
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
+
+    //The query 
+    std::string sQuery = GetQueryFromScript("Scripts/SelectPolygonFromPoint.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (!stmt )
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        QString qe = QString(error.c_str());
+        qWarning() << "Prepare statement for retrieving polygon from point failed: " << qe;
+        return -1;
+    }
+
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, x);
+    rc = sqlite3_bind_double(stmt, 2, y );
+
+    // Execute the query
+    rc = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        int wktlength = sqlite3_column_bytes(stmt, 0);
+        if (wktlength > 0)
+        {
+            CGeoResult geoResult;
+            geoResult.m_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            geoResult.m_wkt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            geoResult.m_minX = sqlite3_column_double(stmt, 2);
+            geoResult.m_minY = sqlite3_column_double(stmt, 3);
+            geoResult.m_maxX = sqlite3_column_double(stmt, 4);
+            geoResult.m_maxY = sqlite3_column_double(stmt, 5);
+
+            //Add retrieved data to result set 
+            geoResults.push_back(geoResult);
+        }
+    }
+    if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        retval = -1;
+    }
+
+    // Finalize the statement
+    sqlite3_finalize(stmt);
+
+    return retval;
+}
 
 SVector CLandDB::NameAndDetails(double x, double y)
 {

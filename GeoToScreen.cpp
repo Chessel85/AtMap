@@ -10,6 +10,9 @@ CGeoToScreen::CGeoToScreen()
 {
     //Create context 
     CreateContext();
+
+    //Initialize variables
+    m_uniformScale = 0;
 }
 
 CGeoToScreen::~CGeoToScreen()
@@ -205,9 +208,13 @@ int CGeoToScreen::transform(const QGeoPolygon& geoPolygon, QPolygonF& screenPoly
         return -1;
     }
 
-    // Pre-calculate constants to avoid redundant calculations in the loop
-    const double projWidth = m_pjProjTopRight.xyz.x - m_pjProjBottomLeft.xyz.x;
-    const double projHeight = m_pjProjTopRight.xyz.y - m_pjProjBottomLeft.xyz.y;
+    // Before converting from the projection to screen precalculate some numbers 
+    double projWidth = m_pjProjTopRight.xyz.x - m_pjProjBottomLeft.xyz.x;
+    double projHeight = m_pjProjTopRight.xyz.y - m_pjProjBottomLeft.xyz.y;
+    double scaleX = m_screenSize.width() / projWidth;
+    double scaleY = m_screenSize.height() / projHeight;
+    if (m_uniformScale > 0)
+        scaleX = scaleY = m_uniformScale;
 
     if (projWidth == 0.0 || projHeight == 0.0)
     {
@@ -219,10 +226,10 @@ int CGeoToScreen::transform(const QGeoPolygon& geoPolygon, QPolygonF& screenPoly
     // Now convert the projected coordinates (in meters) to screen coordinates (in pixels)
     for (int i = 0; i < pointCount; ++i)
     {
-        double screenX = ((lons[i] - m_pjProjBottomLeft.xyz.x) / projWidth) * m_screenSize.width();
+        double screenX = (lons[i] - m_pjProjBottomLeft.xyz.x) * scaleX + m_offsetX;
 
         // Map the y-coordinate from projected space to screen pixels, and flip the Y-axis
-        double screenY = ((m_pjProjTopRight.xyz.y - lats[i]) / projHeight) * m_screenSize.height();
+        double screenY = (m_pjProjTopRight.xyz.y - lats[i]) * scaleY + m_offsetY;
 
         screenPolygon.append(QPointF(screenX, screenY));
     }
@@ -261,6 +268,44 @@ int CGeoToScreen::transformPoint(const QGeoCoordinate& geoPoint, QPointF& screen
 
     screenPoint.setX(screenX);
     screenPoint.setY(screenY);
+
+    return 0;
+}
+
+int CGeoToScreen::setTransformedBoundingBox(const QGeoCoordinate& geoBottomLeft, const QGeoCoordinate& geoTopRight)
+{
+    // Ensure the transformation object has been created
+    if (!m_projTransform)
+    {
+        qWarning() << "CGeoToScreen: No projection created in setTransformedBoundingBox. Call CreateProjection first.";
+        return -1;
+    }
+
+    //Transform the bottom left geoPoint to projection
+    PJ_COORD pjGeoPoint;
+    pjGeoPoint.xyz.x = geoBottomLeft.longitude();
+    pjGeoPoint.xyz.y = geoBottomLeft.latitude();
+    m_pjProjBottomLeft = proj_trans(m_projTransform, PJ_FWD, pjGeoPoint);
+
+    //Transform the top right geoPoint to projection
+    pjGeoPoint.xyz.x = geoTopRight.longitude();
+    pjGeoPoint.xyz.y = geoTopRight.latitude();
+    m_pjProjTopRight = proj_trans(m_projTransform, PJ_FWD, pjGeoPoint);
+
+    // Calculate the actual width and height of the country in Meters
+    double projWidth = m_pjProjTopRight.xyz.x - m_pjProjBottomLeft.xyz.x;
+    double projHeight = m_pjProjTopRight.xyz.y - m_pjProjBottomLeft.xyz.y;
+
+    // Calculate Pixels Per Meter for both axes
+    double scaleX = m_screenSize.width() / projWidth;
+    double scaleY = m_screenSize.height() / projHeight;
+
+    // Use the SMALLEST scale to ensure the country fits without stretching
+    m_uniformScale = std::min(scaleX, scaleY);
+
+    //Shift polygon to centre of screen otherwise will hug either top or left edge
+    m_offsetX = (m_screenSize.width() - (projWidth * m_uniformScale)) / 4.0;
+    m_offsetY = (m_screenSize.height() - (projHeight * m_uniformScale)) / 4.0;
 
     return 0;
 }

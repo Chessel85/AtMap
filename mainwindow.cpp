@@ -16,6 +16,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QMap.h>
+#include "outlineDialog.h"
 #include "gotoLocationDialog.h"
 #include "RedrawReason.h"
 
@@ -34,7 +35,7 @@ MainWindow::MainWindow(const QString& applicationPath, const QString& dbFilename
     SetupConnects();
 
     //Set title of main window
-    setWindowTitle("Accessible Atlas");
+    setWindowTitle("AtMap");
 
     //Set size of main window and a minimum size
     resize(1200, 800);
@@ -56,8 +57,17 @@ void MainWindow::SetupMainMenu()
 
     //Create top level menus onto the menu bar
     QMenu* fileMenu = menuBar->addMenu(tr( "&File" ));
+    QMenu* viewMenu = menuBar->addMenu(tr("&View"));
     QMenu* mapMenu = menuBar->addMenu(tr("&Map"));
     QMenu* helpMenu = menuBar->addMenu(tr("&Help"));
+
+    //Add to view menu 
+//Outline dialogue 
+    QAction* outlineAction = viewMenu->addAction(tr("&Outline view..."));
+    outlineAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
+    connect(outlineAction, &QAction::triggered, this, &MainWindow::onOutlineTriggered);
+
+
 
     //Set up menu items in the file menu 
     //Quit gets connected to the application quit slot 
@@ -207,11 +217,6 @@ void MainWindow::SetupConnects()
     connect(m_pInfoPane, &CInfoPane::locationSelected, this, &MainWindow::handleLocationSelected);
     }
 
-
-
-
-
-
 void MainWindow::showEvent(QShowEvent *event)
 {
     //Call base class implementation first 
@@ -330,7 +335,7 @@ void MainWindow::onMapClicked(const QPoint& pixelPos, int width, int height)
 void MainWindow::showAboutDialog() 
 {
     QMessageBox::about(this, tr("About Accessible Atlas"),
-        tr("Accessible Atlas version 0.0.2 released August 2025"));
+        tr("AtMap version 0.0.3 released March 2026"));
 }
 
 void MainWindow::showDocumentation()
@@ -349,6 +354,46 @@ void MainWindow::showLicensing()
 
     //Call desktop services to open the HTML file 
     QDesktopServices::openUrl(QUrl::fromLocalFile(docPath));
+}
+
+void MainWindow::onOutlineTriggered()
+{
+    //Capture current focus so can return to it after dialogue closes
+    QWidget* focusedWidget = QApplication::focusWidget();
+
+    //Get data to display
+    QList<CGeoResult> geoResults;
+    m_pMapManager->GetPolygonAtUserPosition( geoResults );
+
+    //Check if no data retrieved 
+    bool noData = false;
+    if (geoResults.isEmpty())
+        noData = true;
+    else if (geoResults.at(0).m_geoPolygons.size() == 0)
+        noData = true;
+
+    //Display a message if no data and return 
+    if( noData )
+    {
+        QMessageBox::information(this,
+            "No outline to display", 
+            "Unable to find any data to draw at this location. Try moving and try again.");
+        return;
+    }
+
+    //Get the outline dialogue and pass it data 
+    COutlineDialog dialog(this);
+    dialog.setCountryGeometry(geoResults);
+    QString name = QString::fromStdString( geoResults.at(0).m_name );
+    dialog.setWindowTitle(name );
+    dialog.setWindowState(Qt::WindowMaximized);
+
+    //Display dialog
+    dialog.exec(); // showMaximized();
+
+    //Return focus to pre-dialogue widget
+    if (focusedWidget)
+        focusedWidget->setFocus();
 }
 
 void MainWindow::onGoToLocationTriggered()

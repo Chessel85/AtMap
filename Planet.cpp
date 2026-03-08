@@ -136,6 +136,16 @@ int CPlanet::GetVisibleData(double south, double west, double north, double east
     return retval;
 }
 
+int CPlanet::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults )
+{
+    int retval = 0;
+
+    //Get polygon
+    retval = m_LandDB.GetPolygonFromPoint(x, y, geoResults);
+
+    return retval;
+}
+
 int CPlanet::SearchNames(std::string searchText, NRList& nrResults)
 {
     return m_LandDB.SearchNames(searchText, nrResults);

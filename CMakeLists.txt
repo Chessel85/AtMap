@@ -57,6 +57,7 @@ set(PROJECT_SOURCES
     initManager.cpp
     mainwindow.cpp
     GotoLocationDialog.cpp
+    outlineDialog.cpp
     SearchLocationDialog.cpp
     CompassPane.cpp
     InfoPane.cpp
@@ -80,6 +81,7 @@ set(PROJECT_SOURCES
     initManager.h
     mainwindow.h
     GotoLocationDialog.h
+    outlineDialog.h
     SearchLocationDialog.h
     CompassPane.h
     InfoPane.h

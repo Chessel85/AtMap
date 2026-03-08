@@ -48,6 +48,7 @@ public slots:
     void PopulateGetLayersRequest(GLList& layerResults);
 
 private slots:
+    void onOutlineTriggered(); // Slot for the "Go to Location" menu item
     void onGoToLocationTriggered(); // Slot for the "Go to Location" menu item
     void onSearchLocationTriggered(); // Slot for the "Go to Location" menu item
     void onMapViewTriggered();  //slot for changing map type 

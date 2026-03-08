@@ -208,6 +208,23 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
     emit  promptInfoPaneToRefresh();
 }
 
+void CMapManager::GetPolygonAtUserPosition(QList<CGeoResult>& geoResults)
+{
+    //Get the polygon at the current position of the user 
+    int retval = 0;
+
+    //Get rid of any existing data
+    geoResults.clear();
+
+    //Ask the planet for polygon at current user location 
+    double x = m_User.GetLocationX();
+    double y = m_User.GetLocationY();
+    retval = m_Planet.GetPolygonFromPoint( x , y, geoResults);
+
+    //Convert wkt to  QGeoPolygon 
+    bool ok = CWKTConverter::ParseGeoResults(geoResults);
+}
+
 
 void CMapManager::onMapClicked(const QPoint& pixelPos, int width, int height )
 {

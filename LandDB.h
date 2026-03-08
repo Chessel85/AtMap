@@ -23,6 +23,7 @@ public:
     bool IsOnLand(double x, double y);
 	NRList NameOfOSMLand(double x, double y, int adminLevel );
 	NRList    FullListOfOSMLand(double x, double y);
+    int GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults);
 	SVector NameAndDetails(double x, double y);
 	double Distance(CLongLat p1, CLongLat p2);
 	double Bearing(CLongLat p1, CLongLat p2);

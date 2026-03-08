@@ -26,6 +26,9 @@ public:
     int transform(const QGeoPolygon& geoPolygon, QPolygonF& screenPolygon );
     int transformPoint(const QGeoCoordinate& geoPoint, QPointF& screenPoint);
 
+    //Set the internal bounding box  in transformed coordinates from geocoordinates 
+    int setTransformedBoundingBox(const QGeoCoordinate& bottomLeft, const QGeoCoordinate& topRight);
+
 private:
     void CreateContext();
     void DestroyObjects();
@@ -37,4 +40,7 @@ private:
     PJ_COORD m_pjProjBottomLeft;
     PJ_COORD m_pjProjTopRight;
     QSizeF m_screenSize;
-        };
+    double m_uniformScale;
+    double m_offsetX;
+    double m_offsetY;
+};

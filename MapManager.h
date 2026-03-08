@@ -40,6 +40,7 @@ public:
     double Distance(QGeoCoordinate& targetCoordinate);
     double Bearing(QGeoCoordinate& targetCoordinate);
     void UpdateMapData(int width, int height, enumRedrawReason redrawReason , QList<CGeoResult>& geoResults , NRList& pointResults );
+    void GetPolygonAtUserPosition(QList<CGeoResult>& geoResults );
     int SearchNames(QString searchText, NRList& nrResults);
 
 
