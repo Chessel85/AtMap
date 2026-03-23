@@ -13,6 +13,8 @@ CGeoToScreen::CGeoToScreen()
 
     //Initialize variables
     m_uniformScale = 0;
+    m_offsetX = 0;
+    m_offsetY  = 0;
 }
 
 CGeoToScreen::~CGeoToScreen()

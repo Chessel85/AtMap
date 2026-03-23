@@ -2,10 +2,10 @@
 SELECT
     p.name,
   AsText( p.polygon ),
-    MbrMinX( polygon ),    
-    MbrMinY( polygon ),
-    MbrMaxX( polygon ),
-    MbrMaxY( polygon )
+    0, --minX,    
+    minY,
+    maxX,
+    maxY
   FROM
     spt_Polygons AS p
     JOIN tbl_layers AS l ON l.layerId = p.layerId 
