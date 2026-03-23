@@ -21,7 +21,7 @@ class CMapManager  : public QObject
 
 //Constructor
 public:
-    CMapManager( const QString& applicationPath, const QString& dbFilename, QObject* parent = nullptr );
+    CMapManager( const QString& dbFilename, QObject* parent = nullptr );
 
 //Methods
 public:

@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
             "Accessible Atlas could not set up its data folder.");
         return -1;
     }
-    MainWindow w( initManager.getApplicationPath(), dbFilename );
+    MainWindow w(dbFilename);
     w.show();
     return a.exec();
 }

@@ -18,101 +18,97 @@ using namespace std;
 
 CLandDB::CLandDB()
 {
-	m_LandDB = nullptr;
+    m_LandDB = nullptr;
 }
 
 CLandDB::~CLandDB()
 {
 }
-int CLandDB::InitialiseOSMLandDatabase( const QString& dbFilename )
+
+int CLandDB::InitialiseLandDatabase(const QString& dbFilename)
 {
-	//Open the OSMLand polygon database 
+    //Open the land database 
     QByteArray ba = dbFilename.toUtf8();
-	int rc = sqlite3_open(ba.constData(), &m_LandDB);
-	if (rc != SQLITE_OK) 
-	return -1;
+    int rc = sqlite3_open(ba.constData(), &m_LandDB);
+    if (rc != SQLITE_OK)
+        return -1;
 
-	//Give permission to load extensions
-	rc = sqlite3_enable_load_extension(m_LandDB, 1);
-	if (rc != SQLITE_OK)
-		return -1;
+    //Give permission to load extensions
+    rc = sqlite3_enable_load_extension(m_LandDB, 1);
+    if (rc != SQLITE_OK)
+        return -1;
 
-	//Create a call to spatial library to load it 
-	string sql = "SELECT load_extension('mod_spatialite');";
-	char* messageError;
-	// rc = sqlite3_exec(m_LandDB, sql.c_str(), nullptr, 0, &messageError);
+    //Create a call to spatial library to load it 
+    string sql = "SELECT load_extension('mod_spatialite');";
+    char* messageError;
+    // rc = sqlite3_exec(m_LandDB, sql.c_str(), nullptr, 0, &messageError);
     //sql = "SELECT load_extension('spatialite', 'spatialite_init');";
     //sql = "SELECT load_extension('mod_spatialite', 'spatialite_init_ex');";
-    rc = sqlite3_exec(m_LandDB, sql.c_str(), nullptr, 0, &messageError);	
+    rc = sqlite3_exec(m_LandDB, sql.c_str(), nullptr, 0, &messageError);
     if (rc != SQLITE_OK)
-	{
-		cerr << messageError << endl;
-		sqlite3_free(messageError);
-		return -1;
-	}
+    {
+        cerr << messageError << endl;
+        sqlite3_free(messageError);
+        return -1;
+    }
 
-return 0;
+    return 0;
 }
 
 void  CLandDB::FreeDatabase()
 {
-	sqlite3_close(m_LandDB);
-	}
-
-void CLandDB::setApplicationPath(const QString& applicationPath)
-{
-    m_applicationPath = applicationPath.toStdString();
+    sqlite3_close(m_LandDB);
 }
 
-NRList CLandDB::NameOfOSMLand(double x, double y, int adminLevel )
+NRList CLandDB::NameOfOSMLand(double x, double y, int adminLevel)
 {
-	NRList slLand;
+    NRList slLand;
 
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/SelectLandNameFromPointAndAdminLevel.sql");
-int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for IHO Seas query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		sqlite3_close(m_LandDB);
-		return slLand;
-	}
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectLandNameFromPointAndAdminLevel.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for IHO Seas query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        sqlite3_close(m_LandDB);
+        return slLand;
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_double(stmt, 1, x);
-	rc = sqlite3_bind_double(stmt, 2, y);
-	rc = sqlite3_bind_double(stmt, 3, x);
-	rc = sqlite3_bind_double(stmt, 4, y);
-	rc = sqlite3_bind_int(stmt, 5, adminLevel * 2-1);
-	rc = sqlite3_bind_int(stmt, 6, adminLevel * 2 );
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, x);
+    rc = sqlite3_bind_double(stmt, 2, y);
+    rc = sqlite3_bind_double(stmt, 3, x);
+    rc = sqlite3_bind_double(stmt, 4, y);
+    rc = sqlite3_bind_int(stmt, 5, adminLevel * 2 - 1);
+    rc = sqlite3_bind_int(stmt, 6, adminLevel * 2);
 
-	// Execute the query
-	rc = 0;
-	while(( rc = sqlite3_step(stmt) ) == SQLITE_ROW)
-	{
-		std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-		double area = sqlite3_column_double(stmt, 1);
+    // Execute the query
+    rc = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        double area = sqlite3_column_double(stmt, 1);
         int relationID = sqlite3_column_int(stmt, 2);
-		nearbyResult nameResult;
-		nameResult.name = name;
-		nameResult.area = area;
-		nameResult.elementID = relationID;
-		slLand.push_back(nameResult );
-	}
-	if (rc != SQLITE_DONE)
-	{
-		std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-	}
+        nearbyResult nameResult;
+        nameResult.name = name;
+        nameResult.area = area;
+        nameResult.elementID = relationID;
+        slLand.push_back(nameResult);
+    }
+    if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
-	return slLand;
+    return slLand;
 }
 
 NRList    CLandDB::FullListOfOSMLand(double x, double y)
@@ -124,7 +120,7 @@ NRList    CLandDB::FullListOfOSMLand(double x, double y)
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectPolygonNameFromPoint.sql");
+    std::string sQuery = GetQueryFromScript("SelectPolygonNameFromPoint.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (!stmt)
     {
@@ -165,7 +161,7 @@ NRList    CLandDB::FullListOfOSMLand(double x, double y)
     return slLand;
 }
 
-int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults )
+int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults)
 {
     int retval = 0;
 
@@ -173,9 +169,9 @@ int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResul
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectPolygonFromPoint.sql");
+    std::string sQuery = GetQueryFromScript("SelectPolygonFromPoint.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-    if (!stmt )
+    if (!stmt)
     {
         std::string error = sqlite3_errmsg(m_LandDB);
         QString qe = QString(error.c_str());
@@ -185,7 +181,7 @@ int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResul
 
     //Bind values to statement
     rc = sqlite3_bind_double(stmt, 1, x);
-    rc = sqlite3_bind_double(stmt, 2, y );
+    rc = sqlite3_bind_double(stmt, 2, y);
 
     // Execute the query
     rc = 0;
@@ -220,99 +216,99 @@ int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResul
 
 SVector CLandDB::NameAndDetails(double x, double y)
 {
-	//Default value for function return 
-	std::string sOSMLandName = "Land"; // "OSMLand";
-	SVector slLand;
+    //Default value for function return 
+    std::string sOSMLandName = "Land"; // "OSMLand";
+    SVector slLand;
 
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/SelectNearestPolygons.sql");
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for detailed land query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		slLand.push_back(sOSMLandName);
-		return slLand;
-	}
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectNearestPolygons.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for detailed land query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        slLand.push_back(sOSMLandName);
+        return slLand;
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_double(stmt, 1, x);
-	rc = sqlite3_bind_double(stmt, 2, y);
-	rc = sqlite3_bind_double(stmt, 3, x);
-	rc = sqlite3_bind_double(stmt, 4, y);
-	rc = sqlite3_bind_double(stmt, 5, x);
-	rc = sqlite3_bind_double(stmt, 6, y);
-	rc = sqlite3_bind_double(stmt, 7, x);
-	rc = sqlite3_bind_double(stmt, 8, y);
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, x);
+    rc = sqlite3_bind_double(stmt, 2, y);
+    rc = sqlite3_bind_double(stmt, 3, x);
+    rc = sqlite3_bind_double(stmt, 4, y);
+    rc = sqlite3_bind_double(stmt, 5, x);
+    rc = sqlite3_bind_double(stmt, 6, y);
+    rc = sqlite3_bind_double(stmt, 7, x);
+    rc = sqlite3_bind_double(stmt, 8, y);
 
-	// Execute the query
-	rc = 0;
-	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-	{
-		const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-		double area = sqlite3_column_double(stmt, 1);
-		double distance  = sqlite3_column_double(stmt, 2);
-		double bearing  = sqlite3_column_double(stmt, 3);
+    // Execute the query
+    rc = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        const char* name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        double area = sqlite3_column_double(stmt, 1);
+        double distance = sqlite3_column_double(stmt, 2);
+        double bearing = sqlite3_column_double(stmt, 3);
 
-		// Create a string stream for formatting the output
-		std::stringstream output;
+        // Create a string stream for formatting the output
+        std::stringstream output;
 
-		// Format the name, area, distance, and bearing according to your requirements
-		output << std::fixed << std::setprecision(1);
-		output << name << " is " << distance << "km away at bearing " << bearing << " degrees";
+        // Format the name, area, distance, and bearing according to your requirements
+        output << std::fixed << std::setprecision(1);
+        output << name << " is " << distance << "km away at bearing " << bearing << " degrees";
 
-		// Get the formatted string
-		std::string formattedString = output.str();
+        // Get the formatted string
+        std::string formattedString = output.str();
 
 
-		slLand.push_back(formattedString);
-	}
-	if (rc != SQLITE_DONE)
-	{
-		std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-	}
+        slLand.push_back(formattedString);
+    }
+    if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
-	//Ensure something gets returned 
-	if (slLand.size() == 0)
-		slLand.push_back(sOSMLandName);
+    //Ensure something gets returned 
+    if (slLand.size() == 0)
+        slLand.push_back(sOSMLandName);
 
-	return slLand;
+    return slLand;
 }
 
 int CLandDB::GetBorderingRelations(int relationID, double x, double y, NRList& relResults)
 {
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/SelectBorderingPolygons.sql");
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (!stmt )
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-        QString errMsg = QString(error.c_str() );
-		qDebug() << "Prepare statement for getting bordering polygons query failed:" << errMsg;
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectBorderingPolygons.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (!stmt)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        QString errMsg = QString(error.c_str());
+        qDebug() << "Prepare statement for getting bordering polygons query failed:" << errMsg;
         return -1;
-	}
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_double(stmt, 1, x);
-	rc = sqlite3_bind_double(stmt, 2, y);
-    rc = sqlite3_bind_int(stmt, 3, relationID );
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, x);
+    rc = sqlite3_bind_double(stmt, 2, y);
+    rc = sqlite3_bind_int(stmt, 3, relationID);
 
     qDebug() << "LandDB: Getting borders with " << x << ", " << y << " and relation ID" << relationID;
 
-	// Execute the query
-	rc = 0;
-	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-	{
+    // Execute the query
+    rc = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
         nearbyResult borderResult;
         borderResult.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         borderResult.area = sqlite3_column_double(stmt, 1);
@@ -321,20 +317,20 @@ int CLandDB::GetBorderingRelations(int relationID, double x, double y, NRList& r
         borderResult.distance = sqlite3_column_double(stmt, 4);
         borderResult.bearing = sqlite3_column_double(stmt, 5);
         borderResult.elementType = 3;
-        borderResult.elementID= sqlite3_column_int64(stmt, 6);
+        borderResult.elementID = sqlite3_column_int64(stmt, 6);
         borderResult.displayOrder = 0;
 
-		relResults.push_back(borderResult );
-	}
-	if (rc != SQLITE_DONE)
-	{
-		qDebug() << "Step failed: " << sqlite3_errmsg(m_LandDB);
-	}
+        relResults.push_back(borderResult);
+    }
+    if (rc != SQLITE_DONE)
+    {
+        qDebug() << "Step failed: " << sqlite3_errmsg(m_LandDB);
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
-	return 0;
+    return 0;
 }
 
 int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& pointResults)
@@ -343,9 +339,9 @@ int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& point
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectContainedPointsFromPolygon.sql");
+    std::string sQuery = GetQueryFromScript("SelectContainedPointsFromPolygon.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-    if (!stmt )
+    if (!stmt)
     {
         std::string error = sqlite3_errmsg(m_LandDB);
         QString errMsg = error.c_str();
@@ -356,7 +352,7 @@ int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& point
     //Bind values to statement
     rc = sqlite3_bind_double(stmt, 1, x);
     rc = sqlite3_bind_double(stmt, 2, y);
-    rc = sqlite3_bind_int(stmt, 3, polygonId );
+    rc = sqlite3_bind_int(stmt, 3, polygonId);
 
     qDebug() << "LandDB: Getting contained points with " << x << ", " << y << " and polygon ID" << polygonId;
 
@@ -365,8 +361,8 @@ int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& point
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
         nearbyResult pointResult;
-        pointResult.name =  reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        pointResult.featureClass= reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1 ));
+        pointResult.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        pointResult.featureClass = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         pointResult.longitude = sqlite3_column_double(stmt, 2);
         pointResult.latitude = sqlite3_column_double(stmt, 3);
         pointResult.area = 0;
@@ -376,7 +372,7 @@ int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& point
         pointResult.elementID = sqlite3_column_int(stmt, 7);
         pointResult.displayOrder = 0;
 
-        pointResults.push_back(pointResult );
+        pointResults.push_back(pointResult);
     }
     if (rc != SQLITE_DONE)
     {
@@ -391,162 +387,162 @@ int CLandDB::GetContainedPoints(int polygonId, double x, double y, NRList& point
 
 double CLandDB::Distance(CLongLat p1, CLongLat p2)
 {
-	//Temporary distance calculator 
-	if (true)
-	{
-		double diffLon = ( p2.longitude() - p1.longitude() ) * CKG_PI / 180.0;
-		double lat1 = p1.latitude() * CKG_PI / 180.0;
-		double lon1 = p1.longitude() * CKG_PI / 180.0;
-		double lat2 = p2.latitude() * CKG_PI / 180.0;
-		double lon2 = p2.longitude() * CKG_PI / 180.0;
-		double distance = 6371  * acos( sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2 ) * cos(diffLon) );
-		return distance;
-	}
+    //Temporary distance calculator 
+    if (true)
+    {
+        double diffLon = (p2.longitude() - p1.longitude()) * CKG_PI / 180.0;
+        double lat1 = p1.latitude() * CKG_PI / 180.0;
+        double lon1 = p1.longitude() * CKG_PI / 180.0;
+        double lat2 = p2.latitude() * CKG_PI / 180.0;
+        double lon2 = p2.longitude() * CKG_PI / 180.0;
+        double distance = 6371 * acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(diffLon));
+        return distance;
+    }
 
-	double distance = 0;
+    double distance = 0;
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript( "Scripts/CalculateDistanceBetweenTwoPoints.sql" );
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for distance query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		sqlite3_close(m_LandDB);
-		return distance;
-	}
+    //The query 
+    std::string sQuery = GetQueryFromScript("CalculateDistanceBetweenTwoPoints.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for distance query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        sqlite3_close(m_LandDB);
+        return distance;
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_double(stmt, 1, p1.longitude() );
- 	rc = sqlite3_bind_double(stmt, 2, p1.latitude());
-	rc = sqlite3_bind_double(stmt, 3, p2.longitude() );
-	rc = sqlite3_bind_double(stmt, 4, p2.latitude());
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, p1.longitude());
+    rc = sqlite3_bind_double(stmt, 2, p1.latitude());
+    rc = sqlite3_bind_double(stmt, 3, p2.longitude());
+    rc = sqlite3_bind_double(stmt, 4, p2.latitude());
 
-	// Execute the query
-	rc = sqlite3_step(stmt);
-	if(rc == SQLITE_ROW)
-	{
-		distance = sqlite3_column_double(stmt, 0);
-	}
-	else
-	{
-		std::cerr << "Step failedin distance calculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		const char* p = sqlite3_errmsg(m_LandDB);
-		int k = 0;
-	}
+    // Execute the query
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        distance = sqlite3_column_double(stmt, 0);
+    }
+    else
+    {
+        std::cerr << "Step failedin distance calculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        const char* p = sqlite3_errmsg(m_LandDB);
+        int k = 0;
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
 
-	return distance;
+    return distance;
 }
 
 double CLandDB::Bearing(CLongLat p1, CLongLat p2)
 {
-	double bearing = 0;
+    double bearing = 0;
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/CalculateBearingBetweenTwoPoints.sql");
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for bearing query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		sqlite3_close(m_LandDB);
-		return bearing;
-	}
+    //The query 
+    std::string sQuery = GetQueryFromScript("CalculateBearingBetweenTwoPoints.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for bearing query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        sqlite3_close(m_LandDB);
+        return bearing;
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_double(stmt, 1, p1.longitude());
-	rc = sqlite3_bind_double(stmt, 2, p1.latitude());
-	rc = sqlite3_bind_double(stmt, 3, p2.longitude());
-	rc = sqlite3_bind_double(stmt, 4, p2.latitude());
+    //Bind values to statement
+    rc = sqlite3_bind_double(stmt, 1, p1.longitude());
+    rc = sqlite3_bind_double(stmt, 2, p1.latitude());
+    rc = sqlite3_bind_double(stmt, 3, p2.longitude());
+    rc = sqlite3_bind_double(stmt, 4, p2.latitude());
 
-	// Execute the query
-	rc = sqlite3_step(stmt);
-	if (rc == SQLITE_ROW)
-	{
-		bearing = sqlite3_column_double(stmt, 0);
-	}
-	else
-	{
-		std::cerr << "Step failedin bearing calculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		const char* p = sqlite3_errmsg(m_LandDB);
-	}
+    // Execute the query
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        bearing = sqlite3_column_double(stmt, 0);
+    }
+    else
+    {
+        std::cerr << "Step failedin bearing calculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        const char* p = sqlite3_errmsg(m_LandDB);
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
 
-	return bearing;
+    return bearing;
 }
 
-int CLandDB::SearchNames(std::string rsText, NRList& nrResults )
+int CLandDB::SearchNames(std::string rsText, NRList& nrResults)
 {
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/SelectSearchResults.sql");
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for search for name query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectSearchResults.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for search for name query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
         return -1;
-	}
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_text(stmt, 1, rsText.c_str(), rsText.length(), SQLITE_TRANSIENT );
-	rc = sqlite3_bind_text(stmt, 2, rsText.c_str(), rsText.length(), SQLITE_TRANSIENT);
+    //Bind values to statement
+    rc = sqlite3_bind_text(stmt, 1, rsText.c_str(), rsText.length(), SQLITE_TRANSIENT);
+    rc = sqlite3_bind_text(stmt, 2, rsText.c_str(), rsText.length(), SQLITE_TRANSIENT);
 
-	// Execute the query
-	rc = 0;
-	while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-	{
-		std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-		double x = sqlite3_column_double(stmt, 1);
-		double y = sqlite3_column_double(stmt, 2);
+    // Execute the query
+    rc = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        double x = sqlite3_column_double(stmt, 1);
+        double y = sqlite3_column_double(stmt, 2);
         nearbyResult nrResult;
         nrResult.name = name;
         nrResult.longitude = x;
         nrResult.latitude = y;
-        nrResults.push_back(nrResult );
-	}
-	if (rc != SQLITE_DONE)
-	{
-		std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        nrResults.push_back(nrResult);
+    }
+    if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
         sqlite3_finalize(stmt);
         return -1;
-	}
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
-return 0;
+    // Finalize the statement
+    sqlite3_finalize(stmt);
+    return 0;
 }
 
 std::string CLandDB::GetQueryFromScript(std::string rsScriptFilename)
 {
-    std::string queryPath = m_applicationPath + "/" + rsScriptFilename;
+    std::string queryPath = SCRIPTS_PATH+ rsScriptFilename;
 
-	std::ifstream file(queryPath);
-	if (!file.is_open())
-	{
-		// Handle error if file cannot be opened
-		std::cerr << "Error opening file: " << rsScriptFilename << std::endl;
-		return "";
-	}
+    std::ifstream file(queryPath);
+    if (!file.is_open())
+    {
+        // Handle error if file cannot be opened
+        std::cerr << "Error opening file: " << rsScriptFilename << std::endl;
+        return "";
+    }
 
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	return buffer.str();
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
 
 }
 
@@ -557,96 +553,96 @@ void CLandDB::UpdateTableToQuery(std::string& rsQuery, int zoomBand)
 
     //Exchange polygonX for  polygon + zoomBand 
     QString polygonX = "polygon" + QString::number(zoomBand);
-    qQuery.replace( "polygonX", polygonX );
-    
+    qQuery.replace("polygonX", polygonX);
+
     rsQuery = qQuery.toStdString();
 }
 
 std::string CLandDB::GetWikipediaValue(int type, int ID)
 {
-	std::string sWikiID = "";
+    std::string sWikiID = "";
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript("Scripts/SelectWikipediaValue.sql");
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
-		std::string error = sqlite3_errmsg(m_LandDB);
-		cerr << "Prepare statement for wikipedia query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		return sWikiID;
-	}
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectWikipediaValue.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::string error = sqlite3_errmsg(m_LandDB);
+        cerr << "Prepare statement for wikipedia query failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        return sWikiID;
+    }
 
-	//Bind values to statement
-	rc = sqlite3_bind_int(stmt, 1, type );
-	rc = sqlite3_bind_int(stmt, 2, ID );
+    //Bind values to statement
+    rc = sqlite3_bind_int(stmt, 1, type);
+    rc = sqlite3_bind_int(stmt, 2, ID);
 
-	// Execute the query
-	rc = sqlite3_step(stmt);
-	if (rc == SQLITE_ROW)
-	{
-		sWikiID = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-	}
-	else
-	{
-		std::cerr << "Step failed in getting wikipedia entrycalculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
-		const char* p = sqlite3_errmsg(m_LandDB);
-	}
+    // Execute the query
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        sWikiID = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+    }
+    else
+    {
+        std::cerr << "Step failed in getting wikipedia entrycalculation: " << sqlite3_errmsg(m_LandDB) << std::endl;
+        const char* p = sqlite3_errmsg(m_LandDB);
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
 
-	return sWikiID;
+    return sWikiID;
 }
 
 bool CLandDB::IsOnLand(double x, double y)
 {
-	//Default value for function return 
-	bool bIsOnLand = false;
+    //Default value for function return 
+    bool bIsOnLand = false;
 
-	//Prepare for the SQLite call 
-	sqlite3_stmt* stmt;
+    //Prepare for the SQLite call 
+    sqlite3_stmt* stmt;
 
-	//The query 
-	std::string sQuery = GetQueryFromScript( "Scripts/SelectIfOnLand.sql" );
-	int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK)
-	{
+    //The query 
+    std::string sQuery = GetQueryFromScript("SelectIfOnLand.sql");
+    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
         std::string sErr = sqlite3_errmsg(m_LandDB);
-		cout << "Prepare statement for testing if on land or not query failed: " << sErr << std::endl;
-		//sqlite3_close(m_LandDB);
-		return false;
-	}
+        cout << "Prepare statement for testing if on land or not query failed: " << sErr << std::endl;
+        //sqlite3_close(m_LandDB);
+        return false;
+    }
 
-	//Bind values to statement
-	sqlite3_bind_double(stmt, 1, x);
-	sqlite3_bind_double(stmt, 2, y);
-	sqlite3_bind_double(stmt, 3, x);
-	sqlite3_bind_double(stmt, 4, y);
+    //Bind values to statement
+    sqlite3_bind_double(stmt, 1, x);
+    sqlite3_bind_double(stmt, 2, y);
+    sqlite3_bind_double(stmt, 3, x);
+    sqlite3_bind_double(stmt, 4, y);
 
-	// Execute the query
-	rc = sqlite3_step(stmt);
-	if (rc == SQLITE_ROW)
-	{
-		int inLand  = sqlite3_column_int( stmt, 0);
-		inLand == 1 ? bIsOnLand = 1 : bIsOnLand = false;
-	}
-	else if (rc != SQLITE_DONE)
-	{
-		std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
-	}
+    // Execute the query
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        int inLand = sqlite3_column_int(stmt, 0);
+        inLand == 1 ? bIsOnLand = 1 : bIsOnLand = false;
+    }
+    else if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Step failed: " << sqlite3_errmsg(m_LandDB) << std::endl;
+    }
 
-	// Finalize the statement
-	sqlite3_finalize(stmt);
+    // Finalize the statement
+    sqlite3_finalize(stmt);
 
 
-	return bIsOnLand;
+    return bIsOnLand;
 }
 
-int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, QList<CGeoResult>& geoResults )
+int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, QList<CGeoResult>& geoResults)
 {
     QElapsedTimer timer;
     timer.start();
@@ -660,22 +656,22 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectPolygonsInBoundingBox.sql");
+    std::string sQuery = GetQueryFromScript("SelectPolygonsInBoundingBox.sql");
     //UpdateTableToQuery(sQuery, zoomBand);
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
         std::string error = sqlite3_errmsg(m_LandDB);
-        QString qe = QString(error.c_str() );
-        qWarning() << "Prepare statement for retrieving active land polygon failed: " <<qe;
+        QString qe = QString(error.c_str());
+        qWarning() << "Prepare statement for retrieving active land polygon failed: " << qe;
         return -1;
     }
 
     //Bind values to statement
     rc = sqlite3_bind_double(stmt, 1, west);
     rc = sqlite3_bind_double(stmt, 2, south);
-    rc = sqlite3_bind_double(stmt, 3, east );
-    rc = sqlite3_bind_double(stmt, 4, north );
+    rc = sqlite3_bind_double(stmt, 3, east);
+    rc = sqlite3_bind_double(stmt, 4, north);
 
     // Execute the query
     rc = 0;
@@ -686,7 +682,7 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
         {
             CGeoResult geoResult;
             geoResult.m_wkt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            geoResult.m_name= reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            geoResult.m_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
             geoResult.m_colourIndex = (int)(sqlite3_column_int(stmt, 2));
             geoResult.m_minX = (double)(sqlite3_column_double(stmt, 3));
             geoResult.m_minY = (double)(sqlite3_column_double(stmt, 4));
@@ -725,7 +721,7 @@ int CLandDB::GetVisibleCities(double south, double west, double north, double ea
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectVisibleCitiesByCapitalAndPopulation.sql");
+    std::string sQuery = GetQueryFromScript("SelectVisibleCitiesByCapitalAndPopulation.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
@@ -786,7 +782,7 @@ int CLandDB::GetVisiblePoints(double south, double west, double north, double ea
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectPointsInMbr.sql");
+    std::string sQuery = GetQueryFromScript("SelectPointsInMbr.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
@@ -812,10 +808,10 @@ int CLandDB::GetVisiblePoints(double south, double west, double north, double ea
             nearbyResult nrResult;
             nrResult.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
             nrResult.longitude = (double)(sqlite3_column_double(stmt, 1));
-            nrResult.latitude= (double)(sqlite3_column_double(stmt, 2));
+            nrResult.latitude = (double)(sqlite3_column_double(stmt, 2));
 
             //Add retrieved data to result set 
-            pointResults.push_back(nrResult );
+            pointResults.push_back(nrResult);
         }
     }
     if (rc != SQLITE_DONE)
@@ -840,7 +836,7 @@ int CLandDB::getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon)
     sqlite3_stmt* stmt = nullptr;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/SelectSpecificPolygon.sql");
+    std::string sQuery = GetQueryFromScript("SelectSpecificPolygon.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
@@ -851,7 +847,7 @@ int CLandDB::getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon)
     }
 
     //Bind values to statement
-    rc = sqlite3_bind_int(stmt, 1, polygonId );
+    rc = sqlite3_bind_int(stmt, 1, polygonId);
     // Execute the query
     rc = 0;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -875,16 +871,16 @@ int CLandDB::getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon)
     // Finalize the statement
     sqlite3_finalize(stmt);
 
-return retval;
+    return retval;
 }
 
-int CLandDB::setLayerSelected(int layerId, int selected )
+int CLandDB::setLayerSelected(int layerId, int selected)
 {
     int retval = 0;
     sqlite3_stmt* stmt = nullptr;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("Scripts/UpdateLayerSelected.sql");
+    std::string sQuery = GetQueryFromScript("UpdateLayerSelected.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
@@ -895,18 +891,18 @@ int CLandDB::setLayerSelected(int layerId, int selected )
     }
 
     //Bind values to statement
-    rc = sqlite3_bind_int(stmt, 1, selected );
+    rc = sqlite3_bind_int(stmt, 1, selected);
     if (rc)
         return -2;
-    rc = sqlite3_bind_int(stmt, 2, layerId );
+    rc = sqlite3_bind_int(stmt, 2, layerId);
     if (rc)
         return -3;
 
     // Execute the query
     rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE )
+    if (rc != SQLITE_DONE)
     {
-        QString errorMsg = "Error setting layer selected state for layer " + QString::number( layerId ) + " to " + QString::number( selected );
+        QString errorMsg = "Error setting layer selected state for layer " + QString::number(layerId) + " to " + QString::number(selected);
         errorMsg += QString::fromStdString(sqlite3_errmsg(m_LandDB));
         qWarning() << errorMsg;
         cerr << "Error setting layer selected state: " << sqlite3_errmsg(m_LandDB) << std::endl;

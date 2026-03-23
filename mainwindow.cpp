@@ -22,14 +22,14 @@
 
 
 
-MainWindow::MainWindow(const QString& applicationPath, const QString& dbFilename, QWidget *parent)
+MainWindow::MainWindow(const QString& dbFilename, QWidget *parent)
     : QMainWindow(parent)
 {
 //Create the menu 
     SetupMainMenu();
 
     //Create the widget structure of map, compass and info pane
-    SetupWidgets( applicationPath, dbFilename );
+    SetupWidgets( dbFilename );
 
     //Now all objects exist, and to keep them all in one place, create connects
     SetupConnects();
@@ -122,10 +122,10 @@ void MainWindow::SetupMainMenu()
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
 }
 
-void MainWindow::SetupWidgets( const QString& applicationPath, const QString& dbFilename )
+void MainWindow::SetupWidgets( const QString& dbFilename )
 {
     //Set up map manager on the heap to avoid events calling member variables during destruction
-    m_pMapManager = new CMapManager(applicationPath, dbFilename, this);
+    m_pMapManager = new CMapManager(dbFilename, this);
 
     //Create main splitter
     QSplitter* pMainSplitter = new QSplitter(Qt::Horizontal, this);

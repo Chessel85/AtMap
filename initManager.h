@@ -13,9 +13,7 @@ public:
 //Methods
 public:
     bool copyDatabaseToAppLocal(QString& filename );
-    QString getApplicationPath() const;
 
 //Members
 private:
-    QString m_applicationPath;
 };

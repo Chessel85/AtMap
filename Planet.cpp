@@ -18,11 +18,10 @@ CPlanet::~CPlanet()
     m_LandByCoastlineDB.FreeDatabase();
 }
 
-void CPlanet::InitialiseDatabases( const QString& applicationPath, const QString& dbFilename )
+void CPlanet::InitialiseDatabases( const QString& dbFilename )
 {
     m_WaterDB.InitialiseWaterDatabase();
-    m_LandDB.InitialiseOSMLandDatabase( dbFilename );
-    m_LandDB.setApplicationPath(applicationPath);
+    m_LandDB.InitialiseLandDatabase( dbFilename );
     m_LandByCoastlineDB.InitialiseDatabase();
     }
 

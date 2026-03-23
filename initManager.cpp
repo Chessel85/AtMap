@@ -6,7 +6,6 @@
 
 CInitManager::CInitManager()
 {
-    m_applicationPath = QCoreApplication::applicationDirPath();
 }
 
 CInitManager::~CInitManager()
@@ -24,31 +23,14 @@ bool CInitManager::copyDatabaseToAppLocal(QString& filename)
 
     // Only copy if the database does not  exist in AppData yet
     if (QFile::exists(filename))
-        return true;
+        return  true;
 
-    //Work out path of seed database 
-    QString seedPath;
-
-    // Candidate 1: Deployment Layout Program Files/data
-    QString deployPath = m_applicationPath+ "/data/" + dbName;
-
-    // Candidate 2: cmakelist layout 
-    QString devPath = QDir(m_applicationPath).filePath("../../data/" + dbName);
-
-    // Determine which path actually exists
-    if (QFile::exists(deployPath)) 
-    {
-        seedPath = deployPath;
-    }
-    else if (QFile::exists(devPath)) 
-    {
-        seedPath = devPath;
-    }
+    //Get path of seed database 
+    QString seedPath = DATA_PATH + dbName;
 
     if (seedPath.isEmpty())
     {
-        qCritical() << "Initialization Failure: Could not locate seed database.";
-        qCritical() << "Attempted paths:" << deployPath << "AND" << devPath;
+        qCritical() << "Initialization Failure: Could not locate seed database:" << seedPath;
         filename = "";
         return false;
     }
@@ -64,12 +46,8 @@ bool CInitManager::copyDatabaseToAppLocal(QString& filename)
 
     // Ensure the user has full permissions to write to their local copy
     QFile::setPermissions(filename, QFile::WriteOwner | QFile::ReadOwner | QFile::WriteUser | QFile::ReadUser);
+
     qDebug() << "Success: Database copied from" << seedPath << "to" << filename;
 
     return true;
-}
-
-QString CInitManager::getApplicationPath() const
-{
-    return m_applicationPath;
 }

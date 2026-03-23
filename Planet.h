@@ -20,7 +20,7 @@ public:
 
 //Methods 
 public:
-    void InitialiseDatabases( const QString& applicationPath, const QString& dbFilename );
+    void InitialiseDatabases( const QString& dbFilename );
     bool DatabasesOK();
     int GetCurrentLocationName(double x, double y, std::string& name, int& objectID );
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);

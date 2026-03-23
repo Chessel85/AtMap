@@ -14,14 +14,14 @@
 
 #define DEFAULT_VIEWABLE_AREA_SCALE 1.6
 
-CMapManager::CMapManager( const QString& applicationPath, const QString& dbFilename, QObject* parent)
+CMapManager::CMapManager( const QString& dbFilename, QObject* parent)
     : QObject(parent)
 {
     //Initial flags
     m_objectID = -1;
 
     //Load databases
-    m_Planet.InitialiseDatabases( applicationPath, dbFilename );
+    m_Planet.InitialiseDatabases( dbFilename );
 }
 
 void CMapManager::MoveUser(int dx, int dy)

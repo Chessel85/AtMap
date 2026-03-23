@@ -19,7 +19,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(const QString& applicationPath, const QString& dbFilename, QWidget *parent = nullptr);
+    MainWindow(const QString& dbFilename, QWidget *parent = nullptr);
     ~MainWindow();
 
     //Methods
@@ -27,7 +27,7 @@ public:
 
 private:
     void SetupMainMenu();
-    void SetupWidgets( const QString& applicationPath, const QString& dbFilename );
+    void SetupWidgets( const QString& dbFilename );
     void SetupConnects();
     void UpdateInfoPane( );
     bool HandleF6AndTabKeyEvents(QKeyEvent* pKeyEvent);

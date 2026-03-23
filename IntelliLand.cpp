@@ -11,7 +11,7 @@ CIntelliLand::~CIntelliLand()
 
 int CIntelliLand::InitialiseOSMLandDatabase( const QString& dbFilename )
 {
-	return m_LandDB.InitialiseOSMLandDatabase( dbFilename );
+	return m_LandDB.InitialiseLandDatabase( dbFilename );
 }
 
 void CIntelliLand::FreeDatabase()

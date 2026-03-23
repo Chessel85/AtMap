@@ -141,15 +141,26 @@ if(NOT MSVC)
     install(TARGETS AtMap RUNTIME DESTINATION bin)
 endif()
 
-# Copy Data and Scripts folders (Fixed syntax and target name)
+# Provide C++ code with direct paths to the MASTER folders
+    # We use escaped quotes so the compiler sees a standard string literal
+    target_compile_definitions(AtMap PRIVATE 
+        _CONSOLE WIN32 WIN64 _MBCS 
+        _CRT_NON_CONFORMING_SWPRINTFS 
+        _CRT_SECURE_NO_WARNINGS
+        _ENABLE_EXTENDED_ALIGNED_STORAGE
+        DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/"
+        SCRIPTS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scripts/"
+        SOUNDS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/sounds/"
+    )
+# Sets AtMap as the default "Startup Project" when you open the .sln
+set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT AtMap)
+
+# Copy document folders (Fixed syntax and target name)
 add_custom_command(TARGET AtMap POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/data"
-        "$<TARGET_FILE_DIR:AtMap>/data"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts"
-        "$<TARGET_FILE_DIR:AtMap>/scripts"
-    COMMENT "Copying data and scripts folders to executable directory..."
+        "${CMAKE_CURRENT_SOURCE_DIR}/documents"
+        "$<TARGET_FILE_DIR:AtMap>/documents"
+    COMMENT "Copying document folder to executable directory..."
 )
 
 # This block automates the deployment of Qt DLLs to the build folder
