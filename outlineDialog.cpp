@@ -24,17 +24,26 @@ void COutlineDialog::paintEvent(QPaintEvent* event)
     if (geoResult.m_geoPolygons.size() == 0)
         return;
 
-    //Set viewport and screen variables for conversion between the two domains 
+    //Calculate width and height from values which already account for antimeridian 
+    double geoWidth = geoResult.m_maxX - geoResult.m_minX;
+    double geoHeight = geoResult.m_maxY - geoResult.m_minY;
+
+    //Get bounding box using normalised values 
+    if (geoResult.m_maxX > 180)
+        geoResult.m_maxX = 360 - geoResult.m_maxX;
+
     QGeoCoordinate geoBottomLeft(geoResult.m_minY, geoResult.m_minX);
     QGeoCoordinate geoTopRight(geoResult.m_maxY, geoResult.m_maxX);
-    double geoWidth = geoTopRight.longitude() - geoBottomLeft.longitude();
-    double geoHeight = geoTopRight.latitude() - geoBottomLeft.latitude();
     double screenWidth = (double)(this->width());
     double screenHeight = (double)(this->height());
 
     //Prepare to transform geocoordinates to screen pixels
     CGeoToScreen transformer;
-    QGeoCoordinate geoCentre( geoBottomLeft.latitude() + geoHeight/ 2, geoBottomLeft.longitude() + geoWidth/ 2 );
+    double centreX = geoBottomLeft.longitude() + geoWidth / 2;
+    if (centreX > 180)
+        centreX -= 360;
+    double centreY = geoBottomLeft.latitude() + geoHeight / 2;
+    QGeoCoordinate geoCentre( centreY, centreX);
     transformer.SetScreenSize(QSizeF(screenWidth, screenHeight));
     transformer.CreateProjection(geoCentre);
     transformer.setTransformedBoundingBox(geoBottomLeft, geoTopRight);

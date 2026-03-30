@@ -172,16 +172,16 @@ int CPlanet::setMapViewType(MapViewType mapViewType)
     int rc1 = 0, rc2 = 0;
     if (mapViewType == viewCountry)
     {
-        rc1 = m_LandDB.setLayerSelected(3, 1);
-        rc2 = m_LandDB.setLayerSelected(4, 0);
+        rc1 = m_LandDB.setLayerSelected(2, 1);
+        rc2 = m_LandDB.setLayerSelected(3, 0);
     }
     else if (mapViewType == viewState)
     {
-        rc1 = m_LandDB.setLayerSelected(3, 0);
-        rc2 = m_LandDB.setLayerSelected(4, 1);
+        rc1 = m_LandDB.setLayerSelected(2, 0);
+        rc2 = m_LandDB.setLayerSelected(3, 1);
     }
 
-    qDebug() << "Land layer selection changed with codes " << rc1 << "and " << rc2;
+    qDebug() << "Land layer selection changed using hardcoded values with codes " << rc1 << "and " << rc2;
 
     return !(rc1 == 0 && rc2 == 0);
 }

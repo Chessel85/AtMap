@@ -2,7 +2,7 @@
 SELECT
     p.name,
   AsText( p.polygon ),
-    0, --minX,    
+    minX, 
     minY,
     maxX,
     maxY
