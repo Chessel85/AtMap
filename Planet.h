@@ -5,6 +5,7 @@
 #include "WaterDB.h"
 #include "LandDB.h"
 #include "LandByCoastlineDB.h"
+#include "layerManager.h"
 #include "GeoResult.h"
 #include <qlist.h>
 #include <QGeocoordinate.h>
@@ -22,6 +23,8 @@ public:
 public:
     void InitialiseDatabases( const QString& dbFilename );
     bool DatabasesOK();
+    bool getLayerData(CLayerManager& layerManager);
+    bool setBaseLayer(int layerId);
     int GetCurrentLocationName(double x, double y, std::string& name, int& objectID );
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);
     int GetContainedPoints(int relationID, double x, double y, NRList& pointResults);
@@ -31,7 +34,6 @@ public:
     int SearchNames(std::string searchText, NRList& nrResults);
     double distance(QGeoCoordinate& p1, QGeoCoordinate& p2);
     double Bearing(QGeoCoordinate& p1, QGeoCoordinate& p2);
-    int setMapViewType(MapViewType mapViewType);
 
 private:
     int TransformZoomBandToPopulation(int zoomBand );

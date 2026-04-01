@@ -4,6 +4,7 @@
 #include "aliases.h"
 #include "LongLat.h"
 #include "GeoResult.h"
+#include "layerManager.h"
 #include <sqlite3.h>
 #include <string>
 #include <qlist.h>
@@ -19,6 +20,7 @@ public:
 public:
     int InitialiseLandDatabase(const QString& dbFilename);
     void FreeDatabase();
+    bool getLayerData(CLayerManager& layerManager);
     bool IsOnLand(double x, double y);
     NRList NameOfOSMLand(double x, double y, int adminLevel);
     NRList    FullListOfOSMLand(double x, double y);
@@ -31,6 +33,7 @@ public:
     int GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, QList<CGeoResult>& geoResults);
     int getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon);
     int setLayerSelected(int layerId, int selected);
+    int setBaseGroupLayer(int layerId);
     int GetVisibleCities(double south, double west, double north, double east, int minPopulation, NRList& pointResults);
     int GetVisiblePoints(double south, double west, double north, double east, NRList& pointResults);
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);

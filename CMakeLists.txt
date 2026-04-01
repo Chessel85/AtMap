@@ -65,6 +65,9 @@ set(PROJECT_SOURCES
     InfoWidget.cpp
     InfoTreeWidget.cpp
     MapManager.cpp
+    layerManager.cpp
+    layerGroup.cpp
+    layer.cpp
     WKTConverter.cpp
     Planet.cpp
     User.cpp
@@ -89,6 +92,9 @@ set(PROJECT_SOURCES
     InfoWidget.h
     InfoTreeWidget.h
     MapManager.h
+    layerManager.h
+    layerGroup.h
+    layer.h
     WKTConverter.h
     Planet.h
     User.h

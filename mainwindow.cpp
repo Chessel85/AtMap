@@ -22,14 +22,11 @@
 
 
 
-MainWindow::MainWindow(const QString& dbFilename, QWidget *parent)
+MainWindow::MainWindow(const QString& dbFilename, QWidget* parent)
     : QMainWindow(parent)
 {
-//Create the menu 
-    SetupMainMenu();
-
     //Create the widget structure of map, compass and info pane
-    SetupWidgets( dbFilename );
+    SetupWidgets(dbFilename);
 
     //Now all objects exist, and to keep them all in one place, create connects
     SetupConnects();
@@ -56,25 +53,23 @@ void MainWindow::SetupMainMenu()
     setMenuBar(menuBar);
 
     //Create top level menus onto the menu bar
-    QMenu* fileMenu = menuBar->addMenu(tr( "&File" ));
+    QMenu* fileMenu = menuBar->addMenu(tr("&File"));
     QMenu* viewMenu = menuBar->addMenu(tr("&View"));
     QMenu* mapMenu = menuBar->addMenu(tr("&Map"));
     QMenu* helpMenu = menuBar->addMenu(tr("&Help"));
+
+    //Set up menu items in the file menu 
+//Quit gets connected to the application quit slot 
+    QAction* quitAction = fileMenu->addAction(tr("&Quit"));
+    quitAction->setShortcut(QKeySequence::Quit);
+    quitAction->setMenuRole(QAction::QuitRole);
+    connect(quitAction, &QAction::triggered, this, &MainWindow::close);
 
     //Add to view menu 
 //Outline dialogue 
     QAction* outlineAction = viewMenu->addAction(tr("&Outline view..."));
     outlineAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
     connect(outlineAction, &QAction::triggered, this, &MainWindow::onOutlineTriggered);
-
-
-
-    //Set up menu items in the file menu 
-    //Quit gets connected to the application quit slot 
-    QAction* quitAction = fileMenu->addAction(tr("&Quit"));
-    quitAction->setShortcut(QKeySequence::Quit);
-    quitAction->setMenuRole(QAction::QuitRole);
-    connect(quitAction, &QAction::triggered, this, &MainWindow::close);
 
     //Add to map menu 
     //Goto coordinates 
@@ -91,27 +86,9 @@ void MainWindow::SetupMainMenu()
     //Put in a seperator 
     mapMenu->addSeparator();
 
-    //Create an action group to hold the map view options 
-    QActionGroup* mapViewGroup = new QActionGroup(this);
 
-    //Set map to countries
-    QAction* mapViewCountryAction = mapMenu->addAction(tr("&Country view"));
-    mapViewCountryAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_1));
-    mapViewCountryAction->setCheckable(true); 
-    mapViewCountryAction->setChecked(true);   // Set as default active view
-    m_mapViewType = viewCountry;
-    mapViewCountryAction->setData(viewCountry); // store enum of country style map 
-    mapViewCountryAction->setActionGroup(mapViewGroup); // Add to group
-    connect(mapViewCountryAction, &QAction::triggered, this, &MainWindow::onMapViewTriggered);
-
-
-    //Set map to states and provinces 
-    QAction* mapViewStateAction = mapMenu->addAction(tr("&State/province view"));
-    mapViewStateAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_2));
-    mapViewStateAction->setCheckable(true);
-    mapViewStateAction->setData(viewState); // store enum of state style map 
-    mapViewStateAction->setActionGroup(mapViewGroup); // Add to group
-    connect(mapViewStateAction, &QAction::triggered, this, &MainWindow::onMapViewTriggered);
+    //Create menu items for base layers dynamically dependent on what is in database
+    setupBaseLayerMenus(mapMenu );
 
     //Help menu
     QAction* documentationAction = helpMenu->addAction(tr("&Documentation"));
@@ -122,10 +99,69 @@ void MainWindow::SetupMainMenu()
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
 }
 
-void MainWindow::SetupWidgets( const QString& dbFilename )
+void MainWindow::setupBaseLayerMenus(QMenu* mapMenu)
+{
+    //Get layer data from map manager 
+    QVector<LayerData> layers;
+    m_pMapManager->getLayers(layers);
+
+    //Track submenus by Group ID
+    QMap<int, QMenu*> groupSubmenus;
+    QMap<int, QActionGroup*> actionGroups;
+
+    //Iterate through layer data and create submenus and menus as needed 
+    int shortcutCounter = 0;
+    for (const LayerData& ld : layers)
+    {
+        //Skip if not a base group
+        if (!ld.isBaseGroup)
+            continue;
+
+        // If this is a new group then create the Submenu
+        if (!groupSubmenus.contains(ld.groupId)) 
+        {
+            QMenu* subMenu = mapMenu->addMenu(ld.groupName);
+            groupSubmenus.insert(ld.groupId, subMenu);
+
+            // Create a radio button group for this specific submenu
+            QActionGroup* ag = new QActionGroup(this);
+            ag->setExclusive(true);
+            actionGroups.insert(ld.groupId, ag);
+        }
+
+        //Get the submenu and action group 
+        QMenu* currentSubMenu = groupSubmenus[ld.groupId];
+        QActionGroup* currentAg = actionGroups[ld.groupId];
+
+        // Create the layer action inside the submenu
+        QAction* action = currentSubMenu->addAction(ld.layerName);
+        action->setCheckable(true);
+        action->setChecked(ld.isSelected);
+        action->setActionGroup(currentAg);
+
+        // Store the ID for the database logic
+        action->setData(ld.layerId);
+
+        // Set Shortcut
+        if (shortcutCounter < 9)
+        {
+            action->setShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + shortcutCounter)));
+            shortcutCounter++;
+        }
+
+        //Connect menu item to a trigger handler 
+        connect(action, &QAction::triggered, this, &MainWindow::onMapBaseLayerTriggered );
+    }
+}
+
+void MainWindow::SetupWidgets(const QString& dbFilename)
 {
     //Set up map manager on the heap to avoid events calling member variables during destruction
+    //Need to create map manager early as some of the user interface needs data from it 
     m_pMapManager = new CMapManager(dbFilename, this);
+
+    //Create the menu 
+    SetupMainMenu();
 
     //Create main splitter
     QSplitter* pMainSplitter = new QSplitter(Qt::Horizontal, this);
@@ -215,9 +251,9 @@ void MainWindow::SetupConnects()
 
     //InfoPane says a location has been selected 
     connect(m_pInfoPane, &CInfoPane::locationSelected, this, &MainWindow::handleLocationSelected);
-    }
+}
 
-void MainWindow::showEvent(QShowEvent *event)
+void MainWindow::showEvent(QShowEvent* event)
 {
     //Call base class implementation first 
     QMainWindow::showEvent(event);
@@ -226,7 +262,6 @@ void MainWindow::showEvent(QShowEvent *event)
     if (m_bInitialShow)
     {
         m_bInitialShow = false;
-        m_pMapManager->setMapViewType(m_mapViewType);
         m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrBoth, m_geoResults, m_pointResults);
     }
 }
@@ -244,7 +279,7 @@ void MainWindow::keyPressEvent(QKeyEvent* keyEvent)
     //Handles F6 
     if (HandleF6AndTabKeyEvents(keyEvent))
         keyEvent->accept();
-    else 
+    else
         QWidget::keyPressEvent(keyEvent);
 
     //Need something to handle mouse click events on map area 
@@ -271,7 +306,7 @@ bool MainWindow::HandleF6AndTabKeyEvents(QKeyEvent* pKeyEvent)
             m_pInfoPane->RestoreFocus();
             return true;
         }
-        else if (m_pInfoPane->isAncestorOf(focusedWidget ) )
+        else if (m_pInfoPane->isAncestorOf(focusedWidget))
         {
             //Focus is in info pane 
             m_pInfoPane->SaveFocus();
@@ -287,7 +322,7 @@ void MainWindow::onNorthButtonClicked()
 {
     m_pCompassPane->setEnabledAllButtons(false);
     m_pMapManager->MoveUser(0, 1);
-    m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults );
+    m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
 }
 
 void MainWindow::onEastButtonClicked()
@@ -315,7 +350,7 @@ void MainWindow::onStepMoreButtonClicked()
 {
     m_pCompassPane->setEnabledAllButtons(false);
     m_pMapManager->ChangeStep(1);
-    m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrStepSizeChange , m_geoResults, m_pointResults);
+    m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrStepSizeChange, m_geoResults, m_pointResults);
 }
 
 void MainWindow::onStepLessButtonClicked()
@@ -328,11 +363,11 @@ void MainWindow::onStepLessButtonClicked()
 void MainWindow::onMapClicked(const QPoint& pixelPos, int width, int height)
 {
     m_pCompassPane->setEnabledAllButtons(false);
-    m_pMapManager->MoveUser(pixelPos, width, height );
+    m_pMapManager->MoveUser(pixelPos, width, height);
     m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
 }
 
-void MainWindow::showAboutDialog() 
+void MainWindow::showAboutDialog()
 {
     QMessageBox::about(this, tr("About Accessible Atlas"),
         tr("AtMap version 0.0.3 released March 2026"));
@@ -363,7 +398,7 @@ void MainWindow::onOutlineTriggered()
 
     //Get data to display
     QList<CGeoResult> geoResults;
-    m_pMapManager->GetPolygonAtUserPosition( geoResults );
+    m_pMapManager->GetPolygonAtUserPosition(geoResults);
 
     //Check if no data retrieved 
     bool noData = false;
@@ -373,10 +408,10 @@ void MainWindow::onOutlineTriggered()
         noData = true;
 
     //Display a message if no data and return 
-    if( noData )
+    if (noData)
     {
         QMessageBox::information(this,
-            "No outline to display", 
+            "No outline to display",
             "Unable to find any data to draw at this location. Try moving and try again.");
         return;
     }
@@ -384,8 +419,8 @@ void MainWindow::onOutlineTriggered()
     //Get the outline dialogue and pass it data 
     COutlineDialog dialog(this);
     dialog.setCountryGeometry(geoResults);
-    QString name = QString::fromStdString( geoResults.at(0).m_name );
-    dialog.setWindowTitle(name );
+    QString name = QString::fromStdString(geoResults.at(0).m_name);
+    dialog.setWindowTitle(name);
     dialog.setWindowState(Qt::WindowMaximized);
 
     //Display dialog
@@ -401,7 +436,7 @@ void MainWindow::onGoToLocationTriggered()
     //Capture current focus so can return to it after dialogue closes
     QWidget* focusedWidget = QApplication::focusWidget();
 
-    CGotoLocationDialog dialog(this); 
+    CGotoLocationDialog dialog(this);
 
     //Seed the dialog with current coordinates 
     double latitude = m_pMapManager->GetUserY();
@@ -434,8 +469,8 @@ void MainWindow::onSearchLocationTriggered()
     // Display the search for location dialog 
     CSearchLocationDialog searchLocationDialog(this);
 
-// Connect signals from this specific dialog instance to MainWindow slots
-connect(&searchLocationDialog, &CSearchLocationDialog::searchRequested, this, &MainWindow::handleSearchRequested);
+    // Connect signals from this specific dialog instance to MainWindow slots
+    connect(&searchLocationDialog, &CSearchLocationDialog::searchRequested, this, &MainWindow::handleSearchRequested);
     connect(&searchLocationDialog, &CSearchLocationDialog::locationSelected, this, &MainWindow::handleLocationSelected);
     connect(this, &MainWindow::dispatchSearchResults, &searchLocationDialog, &CSearchLocationDialog::handleSearchResults);
 
@@ -453,7 +488,7 @@ void MainWindow::handleSearchRequested(const QString& searchTerm)
 {
     //Create the result data structure here which will get signalled back to the search dialog
     NRList nrResults;
-    int retval =     m_pMapManager->SearchNames(searchTerm, nrResults);
+    int retval = m_pMapManager->SearchNames(searchTerm, nrResults);
 
     if (retval != 0)
     {
@@ -466,7 +501,7 @@ void MainWindow::handleSearchRequested(const QString& searchTerm)
     {
         QString qName = QString::fromStdString(nrResult.name);
         QGeoCoordinate geoCoordinate(nrResult.latitude, nrResult.longitude);
-        sdResults[qName ] = geoCoordinate;
+        sdResults[qName] = geoCoordinate;
     }
     emit dispatchSearchResults(sdResults);
 }
@@ -522,17 +557,17 @@ void MainWindow::PopulateGetLayersRequest(GLList& layerResults)
             for (auto const& key : duplicates.keys())
             {
                 const int value = duplicates.value(key);
-                qDebug() << key << " not added" << value-1 << " times.";
+                qDebug() << key << " not added" << value - 1 << " times.";
             }
         }
         if (layer.layerName == "Cities")
         {
             //Populate from the pointResults list 
-            for (nearbyResult&  pointResult : m_pointResults)
+            for (nearbyResult& pointResult : m_pointResults)
             {
                 nearbyResult nrResult;
                 nrResult.name = pointResult.name;
-                QGeoCoordinate cityCoordinate = QGeoCoordinate( pointResult.latitude, pointResult.longitude);
+                QGeoCoordinate cityCoordinate = QGeoCoordinate(pointResult.latitude, pointResult.longitude);
                 nrResult.distance = m_pMapManager->Distance(cityCoordinate);
                 nrResult.bearing = m_pMapManager->Bearing(cityCoordinate);
                 nrResult.longitude = cityCoordinate.longitude();
@@ -544,33 +579,20 @@ void MainWindow::PopulateGetLayersRequest(GLList& layerResults)
     }
 }
 
-void MainWindow::onMapViewTriggered() 
+void MainWindow::onMapBaseLayerTriggered()
 {
-    //Change the map being displayed 
-    MapViewType oldMapType = m_mapViewType;
+    //Get the menu action that was triggered 
     QAction* action = qobject_cast<QAction*>(sender());
-    if (action) 
-    {
-        int viewType = action->data().toInt();
+    if (!action) 
+        return;
 
-        switch (viewType) {
-        case viewCountry:
-            m_mapViewType = viewCountry;
-            break;
-        case viewState:
-            m_mapViewType = viewState;
-            break;
-        }
-    }
+    // Get the layer id from the action 
+    int layerId = action->data().toInt();
 
-    //Do a map refresh if needed
-    if (oldMapType != m_mapViewType)
-    {
-        qDebug() << "Map type changing from" << ( oldMapType == viewCountry ? "country" : "state")
-            << "to" << (m_mapViewType == viewCountry ? "country" : "state");
+    // Tell map manager of the change 
+    m_pMapManager->activateBaseLayer(layerId);
 
-        m_pCompassPane->setEnabledAllButtons(false);
-        m_pMapManager->setMapViewType(m_mapViewType);
-        m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
-    }
+    // Redraw 
+    m_pCompassPane->setEnabledAllButtons(false);
+    m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
 }

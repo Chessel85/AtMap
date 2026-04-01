@@ -8,6 +8,7 @@
 #include <QPoint.h>
 #include <qlist.h>
 #include <string>
+#include "layerManager.h"
 #include "Planet.h"
 #include "User.h"
 #include "GeoToScreen.h"
@@ -34,7 +35,6 @@ public:
     bool stepAtMin();
     double GetUserX();
     double GetUserY();
-    int setMapViewType(MapViewType mapViewType);
     void GetBorderingRelations(NRList& relResults );
     void GetContainedPoints(NRList& pointResults);
     double Distance(QGeoCoordinate& targetCoordinate);
@@ -42,6 +42,8 @@ public:
     void UpdateMapData(int width, int height, enumRedrawReason redrawReason , QList<CGeoResult>& geoResults , NRList& pointResults );
     void GetPolygonAtUserPosition(QList<CGeoResult>& geoResults );
     int SearchNames(QString searchText, NRList& nrResults);
+    void getLayers(QVector<LayerData>& layers );
+    bool activateBaseLayer(int layerId);
 
 
 //Sockets
@@ -62,6 +64,7 @@ private:
 
     //Member variables
 private:
+    CLayerManager m_layerManager;
     CPlanet m_Planet;
     CUser m_User;
     QGeoCoordinate m_geoBottomLeft;

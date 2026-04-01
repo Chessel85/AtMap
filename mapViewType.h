@@ -1,9 +1,15 @@
 //mapViewType.h
 #pragma once
-//enum for storing info on which type of map to display 
-enum MapViewType 
+//Struct for holding layer data as a data transfer object
+struct LayerData
 {
-    viewCountry,
-    viewState
+    int groupId;
+    QString groupName;
+    int groupSelected;
+    int isBaseGroup;
+    int layerId;
+    QString layerName;
+    bool isSelected;
+    int displayOrder;
+    bool display;
 };
-

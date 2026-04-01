@@ -166,25 +166,6 @@ double CPlanet::Bearing(QGeoCoordinate& p1, QGeoCoordinate& p2)
     return m_LandDB.Bearing(llp1, llp2);
 }
 
-int CPlanet::setMapViewType(MapViewType mapViewType)
-{
-    //Hard coding some layers here for now
-    int rc1 = 0, rc2 = 0;
-    if (mapViewType == viewCountry)
-    {
-        rc1 = m_LandDB.setLayerSelected(2, 1);
-        rc2 = m_LandDB.setLayerSelected(3, 0);
-    }
-    else if (mapViewType == viewState)
-    {
-        rc1 = m_LandDB.setLayerSelected(2, 0);
-        rc2 = m_LandDB.setLayerSelected(3, 1);
-    }
-
-    qDebug() << "Land layer selection changed using hardcoded values with codes " << rc1 << "and " << rc2;
-
-    return !(rc1 == 0 && rc2 == 0);
-}
 int CPlanet::TransformZoomBandToPopulation(int zoomBand )
 {
     int populationThreshold = 0;
@@ -244,4 +225,19 @@ bool CPlanet::splitBoundingBox(double& south1, double& west1, double& north1, do
 int CPlanet::getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon)
 {
     return m_LandDB.getSpecificPolygon(polygonId, polygon);
+}
+
+bool CPlanet::getLayerData(CLayerManager& layerManager)
+{
+    bool ok = m_LandDB.getLayerData(layerManager);
+
+    return ok;
+}
+
+bool CPlanet::setBaseLayer(int layerId)
+{
+    //Set the layer in a group 
+    bool result = m_LandDB.setBaseGroupLayer(layerId);
+
+    return result;
 }

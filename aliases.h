@@ -8,16 +8,16 @@
 
 struct nearbyResult
 {
-    std::string name;
-    std::string featureClass;
-    double latitude;
-    double longitude;
-    double area;
-    double distance;
-    double bearing;
-    int elementType;
-    int elementID;
-    int displayOrder;
+    std::string name = "";
+    std::string featureClass = "";
+    double latitude = 0;
+    double longitude = 0;
+    double area = 0;
+    double distance = 0;
+    double bearing = 0;
+    int elementType = 0;
+    int elementID = 0;
+    int displayOrder = 0;
 };
 
 

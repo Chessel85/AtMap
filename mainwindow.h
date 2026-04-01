@@ -27,6 +27,7 @@ public:
 
 private:
     void SetupMainMenu();
+    void setupBaseLayerMenus(QMenu* mapMenu );
     void SetupWidgets( const QString& dbFilename );
     void SetupConnects();
     void UpdateInfoPane( );
@@ -51,7 +52,7 @@ private slots:
     void onOutlineTriggered(); // Slot for the "Go to Location" menu item
     void onGoToLocationTriggered(); // Slot for the "Go to Location" menu item
     void onSearchLocationTriggered(); // Slot for the "Go to Location" menu item
-    void onMapViewTriggered();  //slot for changing map type 
+    void onMapBaseLayerTriggered();  //slot for changing map type 
 
 public:
  void onMapClicked(const QPoint& pixelPos, int width, int height);
@@ -79,7 +80,6 @@ private:
     bool m_bDataOK;
     QList<CGeoResult> m_geoResults;
     NRList m_pointResults;
-    MapViewType m_mapViewType;
     
     //Main areas 
     CMapManager* m_pMapManager;

@@ -22,6 +22,9 @@ CMapManager::CMapManager( const QString& dbFilename, QObject* parent)
 
     //Load databases
     m_Planet.InitialiseDatabases( dbFilename );
+
+    //Retrieve layer data 
+    m_Planet.getLayerData(m_layerManager);
 }
 
 void CMapManager::MoveUser(int dx, int dy)
@@ -80,13 +83,6 @@ double CMapManager::GetUserX()
 double CMapManager::GetUserY()
 {
     return m_User.GetLocationY();
-}
-
-int CMapManager::setMapViewType(MapViewType mapViewType)
-{
-    int rc = m_Planet.setMapViewType(mapViewType );
-
-    return rc;
 }
 
 void CMapManager::GetBorderingRelations(NRList& relResults)
@@ -251,7 +247,21 @@ int CMapManager::SearchNames(QString searchText, NRList& nrResults)
     return m_Planet.SearchNames(searchText.toStdString(), nrResults);
 }
 
+void CMapManager::getLayers(QVector<LayerData>& layers)
+{
+    m_layerManager.getLayers(layers);
+    }
 
+bool CMapManager::activateBaseLayer(int layerId)
+{
+    //Tell the planet to switch to the new layer 
+    bool ok = m_Planet.setBaseLayer(layerId);
+
+    //Refresh the layer manager
+    m_Planet.getLayerData(m_layerManager);
+
+    return ok;
+}
 
 void CMapManager::polygonPointAnalysis()
 {
@@ -268,7 +278,7 @@ void CMapManager::polygonPointAnalysis()
     QGeoPolygon polygonSpain = spain.first().m_geoPolygons.first();
 
     //Structure to store results
-    struct Distances { QGeoCoordinate geoPortugal; int spainIndex; QGeoCoordinate geoSpain; double distance; };
+    struct Distances { QGeoCoordinate geoPortugal; int spainIndex=0; QGeoCoordinate geoSpain; double distance=0; };
     int numPointsPortugal = polygonPortugal.perimeter().size();
     int numPointsSpain = polygonSpain.perimeter().size();
     std::vector<Distances> results(numPointsPortugal);
