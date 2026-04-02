@@ -37,34 +37,34 @@ void CUser::SetLocation(double x, double y)
         m_location = QGeoCoordinate(y, x);
 }
 
+#include <QtMath>
+
 void CUser::MoveByStep(int dx, int dy)
 {
-    //Work out the azimuth 
-    double azimuth = 0.0; //North is 0, east is 90 etc 
-    if (dx > 0)
-        azimuth = 90.0;
-    else if (dy < 0)
-        azimuth = 180.0;
-    else if (dx < 0)
-        azimuth = 270.0;
+    // Calculate Latitude Change 
+    // One degree of latitude is roughly 111,132 meters everywhere
+    double deltaLat = (dy * m_StepSize * 1000) / 111132.0;
+    double newLat = m_location.latitude() + deltaLat;
+
+    // 2. Calculate Longitude Change (dx)
+    double latRadians = qDegreesToRadians(m_location.latitude());
+    double metersPerDegreeLon = 111320.0 * qCos(latRadians);
+    double deltaLon = (dx * m_StepSize * 1000 ) / metersPerDegreeLon;
+    double newLon = m_location.longitude() + deltaLon;
+
+    // Apply Clamping and Wrapping
+    if (newLat > 80.0)  newLat = 80.0;
+    if (newLat < -80.0) newLat = -80.0;
+
+    while (newLon <= -180.0) newLon += 360.0;
+    while (newLon > 180.0)   newLon -= 360.0;
 
     qDebug() << "Move location : from " << m_location;
 
-    //Do the calculation 
-    m_location = m_location.atDistanceAndAzimuth(m_StepSize*1000, azimuth);
+    m_location.setLatitude(newLat);
+    m_location.setLongitude(newLon);
 
     qDebug() << "Move location : to " << m_location;
-    //Cannot go too high or too low 
-    if (m_location.latitude() > 80.0)
-        m_location.setLatitude(80.0);
-    else if (m_location.latitude() < -80.0)
-        m_location.setLatitude(-80.0);
-
-    //And wrap longitude to stay within minus and plus 180 
-    if (m_location.longitude() < -180.0)
-        m_location.setLongitude(m_location.longitude() + 360.0);
-    else if (m_location.longitude() > 180.0)
-        m_location.setLongitude(m_location.longitude() - 360.0);
 }
 
 double CUser::GetStepSize()

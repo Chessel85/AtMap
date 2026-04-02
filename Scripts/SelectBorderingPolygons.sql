@@ -20,6 +20,8 @@ SELECT DISTINCT
   FROM
   tbl_Borders AS b 
   JOIN spt_polygons AS p  ON b.polygon2Id = p.polygonId 
+    JOIN tbl_layers AS l ON l.layerId =  p.layerId 
   WHERE
-    b.polygon1Id = :polygonId 
+    b.polygon1Id = :polygonId  AND
+    l.selected 
   ORDER BY bearing;
