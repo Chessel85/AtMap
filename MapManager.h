@@ -43,6 +43,7 @@ public:
     void GetPolygonAtUserPosition(QList<CGeoResult>& geoResults );
     int SearchNames(QString searchText, NRList& nrResults);
     void getLayers(QVector<LayerData>& layers );
+    bool setLayers(const QMap<int, bool>& layerStates);
     bool activateBaseLayer(int layerId);
 
 

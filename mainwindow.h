@@ -14,6 +14,9 @@
 #include <qlist.h>
 #include "mapViewType.h"
 
+//Predefines
+class QAction;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -32,6 +35,7 @@ private:
     void SetupConnects();
     void UpdateInfoPane( );
     bool HandleF6AndTabKeyEvents(QKeyEvent* pKeyEvent);
+    void syncLayerMenus();
 
 
 protected:
@@ -50,6 +54,7 @@ public slots:
 
 private slots:
     void onOutlineTriggered(); // Slot for the "Go to Location" menu item
+    void onLayersTriggered(); // Slot for the "Go to Location" menu item
     void onGoToLocationTriggered(); // Slot for the "Go to Location" menu item
     void onSearchLocationTriggered(); // Slot for the "Go to Location" menu item
     void onMapBaseLayerTriggered();  //slot for changing map type 
@@ -86,4 +91,7 @@ private:
     CMapWidget* m_pMapArea;
     CCompassPane* m_pCompassPane;
     CInfoPane* m_pInfoPane;
+
+    //Helpers 
+    QMap<int, QAction*> m_layerActions; 
 };

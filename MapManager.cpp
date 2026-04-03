@@ -252,6 +252,17 @@ void CMapManager::getLayers(QVector<LayerData>& layers)
     m_layerManager.getLayers(layers);
     }
 
+bool CMapManager::setLayers(const QMap<int, bool>& layerStates)
+{
+    bool ok = m_Planet.setLayers(layerStates);
+
+    //Refresh the layer manager
+    m_layerManager.destroyLayerGroups();
+    m_Planet.getLayerData(m_layerManager);
+
+    return ok;
+}
+
 bool CMapManager::activateBaseLayer(int layerId)
 {
     //Tell the planet to switch to the new layer 

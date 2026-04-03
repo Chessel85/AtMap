@@ -19,6 +19,7 @@ public:
 public:
     void addLayerGroup(CLayerGroup* pLayerGroup);
     void getLayers(QVector<LayerData>& layers);
+    void destroyLayerGroups();
 
 //Member variables
 private:

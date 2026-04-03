@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QMap.h>
 #include "outlineDialog.h"
+#include "layersDialog.h"
 #include "gotoLocationDialog.h"
 #include "RedrawReason.h"
 
@@ -66,10 +67,17 @@ void MainWindow::SetupMainMenu()
     connect(quitAction, &QAction::triggered, this, &MainWindow::close);
 
     //Add to view menu 
-//Outline dialogue 
+    //Outline dialogue 
     QAction* outlineAction = viewMenu->addAction(tr("&Outline view..."));
     outlineAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
     connect(outlineAction, &QAction::triggered, this, &MainWindow::onOutlineTriggered);
+
+    //Layers dialog
+    QAction* layersAction = viewMenu->addAction(tr( "&Layers..."));
+    layersAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
+    connect(layersAction, &QAction::triggered, this, &MainWindow::onLayersTriggered);
+
+
 
     //Add to map menu 
     //Goto coordinates 
@@ -88,7 +96,7 @@ void MainWindow::SetupMainMenu()
 
 
     //Create menu items for base layers dynamically dependent on what is in database
-    setupBaseLayerMenus(mapMenu );
+    setupBaseLayerMenus(mapMenu);
 
     //Help menu
     QAction* documentationAction = helpMenu->addAction(tr("&Documentation"));
@@ -118,7 +126,7 @@ void MainWindow::setupBaseLayerMenus(QMenu* mapMenu)
             continue;
 
         // If this is a new group then create the Submenu
-        if (!groupSubmenus.contains(ld.groupId)) 
+        if (!groupSubmenus.contains(ld.groupId))
         {
             QMenu* subMenu = mapMenu->addMenu(ld.groupName);
             groupSubmenus.insert(ld.groupId, subMenu);
@@ -138,6 +146,7 @@ void MainWindow::setupBaseLayerMenus(QMenu* mapMenu)
         action->setCheckable(true);
         action->setChecked(ld.isSelected);
         action->setActionGroup(currentAg);
+        m_layerActions.insert(ld.layerId, action);
 
         // Store the ID for the database logic
         action->setData(ld.layerId);
@@ -150,7 +159,7 @@ void MainWindow::setupBaseLayerMenus(QMenu* mapMenu)
         }
 
         //Connect menu item to a trigger handler 
-        connect(action, &QAction::triggered, this, &MainWindow::onMapBaseLayerTriggered );
+        connect(action, &QAction::triggered, this, &MainWindow::onMapBaseLayerTriggered);
     }
 }
 
@@ -431,6 +440,41 @@ void MainWindow::onOutlineTriggered()
         focusedWidget->setFocus();
 }
 
+void MainWindow::onLayersTriggered()
+{
+    //Capture current focus so can return to it after dialogue closes
+    QWidget* focusedWidget = QApplication::focusWidget();
+
+    //Get data to display
+    //m_pMapManager->getLayers();
+
+    //Get the layers dialog and pass it data 
+    CLayersDialog dialog(this);
+    QVector<LayerData> layerData;
+    m_pMapManager->getLayers(layerData);
+    dialog.setLayers(layerData);
+
+    //Display dialog
+    //Display dialog
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        QMap<int, bool> changes = dialog.getPendingChanges();
+        m_pMapManager->setLayers(changes);
+
+        //Update the map
+        m_pCompassPane->setEnabledAllButtons(false);
+        m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
+
+        //Refresh base map menu items
+        syncLayerMenus();
+    }
+
+
+    //Return focus to pre-dialogue widget
+    if (focusedWidget)
+        focusedWidget->setFocus();
+}
+
 void MainWindow::onGoToLocationTriggered()
 {
     //Capture current focus so can return to it after dialogue closes
@@ -583,7 +627,7 @@ void MainWindow::onMapBaseLayerTriggered()
 {
     //Get the menu action that was triggered 
     QAction* action = qobject_cast<QAction*>(sender());
-    if (!action) 
+    if (!action)
         return;
 
     // Get the layer id from the action 
@@ -595,4 +639,25 @@ void MainWindow::onMapBaseLayerTriggered()
     // Redraw 
     m_pCompassPane->setEnabledAllButtons(false);
     m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrLocationChange, m_geoResults, m_pointResults);
+}
+
+void MainWindow::syncLayerMenus() 
+{
+    // Get the current states from your manager (the ones you just saved)
+    QVector<LayerData> layers;
+    m_pMapManager->getLayers(layers);
+
+    for (const auto& layer : layers) 
+    {
+        // Find the QAction associated with this layerId
+        if ( m_layerActions.contains(layer.layerId)) 
+        {
+            QAction* action = m_layerActions[layer.layerId];
+
+            // Block signals so we do not retrigger the OnMapLayerTriggered slot
+            action->blockSignals(true);
+            action->setChecked(layer.isSelected);
+            action->blockSignals(false);
+        }
+    }
 }

@@ -59,6 +59,7 @@ set(PROJECT_SOURCES
     GotoLocationDialog.cpp
     outlineDialog.cpp
     SearchLocationDialog.cpp
+    layersDialog.cpp
     CompassPane.cpp
     InfoPane.cpp
     MapWidget.cpp
@@ -86,6 +87,7 @@ set(PROJECT_SOURCES
     GotoLocationDialog.h
     outlineDialog.h
     SearchLocationDialog.h
+    layersDialog.h
     CompassPane.h
     InfoPane.h
     MapWidget.h

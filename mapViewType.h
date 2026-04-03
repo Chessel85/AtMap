@@ -12,4 +12,10 @@ struct LayerData
     bool isSelected;
     int displayOrder;
     bool display;
+
+//Comparison operator 
+bool operator==(const LayerData& other) const 
+{
+    return layerId == other.layerId;
+}
 };

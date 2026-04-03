@@ -90,7 +90,7 @@ bool CLandDB::getLayerData(CLayerManager& layerManager)
         std::string geometryCategoryName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
         int layerSelected = sqlite3_column_int(stmt, 7);
         int displayOrder = sqlite3_column_int(stmt, 8);
-        int display= sqlite3_column_int(stmt, 9);
+        int display = sqlite3_column_int(stmt, 9);
 
         //Create a new layer group if needed as assuming layer group id is ascending 
         if (layerGroupId > currentLayerGroup)
@@ -591,7 +591,7 @@ int CLandDB::SearchNames(std::string rsText, NRList& nrResults)
 
 std::string CLandDB::GetQueryFromScript(std::string rsScriptFilename)
 {
-    std::string queryPath = SCRIPTS_PATH+ rsScriptFilename;
+    std::string queryPath = SCRIPTS_PATH + rsScriptFilename;
 
     std::ifstream file(queryPath);
     if (!file.is_open())
@@ -935,46 +935,63 @@ int CLandDB::getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon)
     return retval;
 }
 
-int CLandDB::setLayerSelected(int layerId, int selected)
+bool CLandDB::setLayers(const QMap<int, bool>& layerStates)
 {
-    int retval = 0;
     sqlite3_stmt* stmt = nullptr;
+    char* messageError = nullptr;
 
-    //The query 
+    // Begin Transaction 
+    int rc = sqlite3_exec(m_LandDB, "BEGIN TRANSACTION", nullptr, 0, &messageError);
+    if (rc != SQLITE_OK) 
+    {
+        qWarning() << "Failed to begin transaction:" << messageError;
+        sqlite3_free(messageError);
+        return false;
+    }
+
+    // Prepare the query 
     std::string sQuery = GetQueryFromScript("UpdateLayerSelected.sql");
-    int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-    if (!stmt )
+    rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) 
     {
-        std::string error = sqlite3_errmsg(m_LandDB);
-        QString qe = QString(error.c_str());
-        qWarning() << "Prepare statement for setting layer failed: " << qe;
-        return -1;
+        qWarning() << "Prepare statement failed:" << sqlite3_errmsg(m_LandDB);
+        sqlite3_exec(m_LandDB, "ROLLBACK", nullptr, 0, nullptr);
+        return false;
     }
 
-    //Bind values to statement
-    rc = sqlite3_bind_int(stmt, 1, selected);
-    if (rc)
-        return -2;
-    rc = sqlite3_bind_int(stmt, 2, layerId);
-    if (rc)
-        return -3;
-
-    // Execute the query
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE)
+    // 3. Iterate through layers
+    for (auto i = layerStates.constBegin(); i != layerStates.constEnd(); ++i) 
     {
-        QString errorMsg = "Error setting layer selected state for layer " + QString::number(layerId) + " to " + QString::number(selected);
-        errorMsg += QString::fromStdString(sqlite3_errmsg(m_LandDB));
-        qWarning() << errorMsg;
-        cerr << "Error setting layer selected state: " << sqlite3_errmsg(m_LandDB) << std::endl;
-        sqlite3_finalize(stmt);
-        return -1;
+        // Clear previous bindings and reset the execution state
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+
+        // Bind values: 
+        sqlite3_bind_int(stmt, 1, i.value() ? 1 : 0); // :state
+        sqlite3_bind_int(stmt, 2, i.key());           // :layerId
+
+        rc = sqlite3_step(stmt);
+        if (rc != SQLITE_DONE) 
+        {
+            qWarning() << "Step failed for layer" << i.key() << ":" << sqlite3_errmsg(m_LandDB);
+            sqlite3_finalize(stmt);
+            sqlite3_exec(m_LandDB, "ROLLBACK", nullptr, 0, nullptr);
+            return false;
+        }
     }
 
-    // Finalize the statement
+    // Finalize and Commit
     sqlite3_finalize(stmt);
+    rc = sqlite3_exec(m_LandDB, "COMMIT", nullptr, 0, &messageError);
 
-    return retval;
+    if (rc != SQLITE_OK) 
+    {
+        qWarning() << "Commit failed:" << messageError;
+        sqlite3_free(messageError);
+        return false;
+    }
+
+    return true;
 }
 
 int CLandDB::setBaseGroupLayer(int layerId)
@@ -985,7 +1002,7 @@ int CLandDB::setBaseGroupLayer(int layerId)
     //The query 
     std::string sQuery = GetQueryFromScript("UpdateSelectedLayerInGroup.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-    if (!stmt )
+    if (!stmt)
     {
         std::string error = sqlite3_errmsg(m_LandDB);
         QString qe = QString(error.c_str());

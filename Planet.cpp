@@ -234,6 +234,11 @@ bool CPlanet::getLayerData(CLayerManager& layerManager)
     return ok;
 }
 
+bool CPlanet::setLayers(const QMap<int, bool>& layerStates)
+{
+    return m_LandDB.setLayers(layerStates);
+}
+
 bool CPlanet::setBaseLayer(int layerId)
 {
     //Set the layer in a group 

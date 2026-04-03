@@ -24,6 +24,7 @@ public:
     void InitialiseDatabases( const QString& dbFilename );
     bool DatabasesOK();
     bool getLayerData(CLayerManager& layerManager);
+    bool setLayers(const QMap<int, bool>& layerStates);
     bool setBaseLayer(int layerId);
     int GetCurrentLocationName(double x, double y, std::string& name, int& objectID );
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);

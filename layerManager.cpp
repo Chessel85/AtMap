@@ -7,10 +7,7 @@ CLayerManager::CLayerManager()
 
 CLayerManager::~CLayerManager()
 {
-    //Delete all the layer groups
-    for (CLayerGroup* layerGroup : m_layerGroups)
-        delete layerGroup;
-    m_layerGroups.clear();
+    destroyLayerGroups();
 }
 
 void CLayerManager::addLayerGroup(CLayerGroup* pLayerGroup)
@@ -26,4 +23,12 @@ void CLayerManager::getLayers(QVector<LayerData>& layers)
         //Populate with layer data 
         layerGroup->getLayers(layers);
     }
+}
+
+void CLayerManager::destroyLayerGroups()
+{
+    //Delete all the layer groups
+    for (CLayerGroup* layerGroup : m_layerGroups)
+        delete layerGroup;
+    m_layerGroups.clear();
 }
