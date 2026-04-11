@@ -1,5 +1,6 @@
 //MapWidget.cpp
 #include "MapWidget.h"
+#include <QApplication>
 #include <qpoint.h>
 #include <QGeoRectangle>  
 #include <qpainter.h>
@@ -11,6 +12,8 @@
 #include <QMouseEvent> // Required for QMouseEvent
 #include <qelapsedtimer.h>
 #include <qSet.h>
+#include <QClipboard>
+#include <QPixmap>
 #include <QDebug> // For debugging output
 
 
@@ -200,6 +203,18 @@ m_screenHeight = (double)(this->height());
     qDebug() << "Conversion to pixels took" << timer.elapsed() << "milliseconds";
 }
 
+void CMapWidget::copyMapToClipboard() 
+{
+    // grab handles the rendering of the widget and its children
+    QPixmap screenshot = this->grab();
+
+    // Access the system clipboard
+    QClipboard* clipboard = QApplication::clipboard();
+
+    // Set the pixmap to the clipboard
+    clipboard->setPixmap(screenshot);
+}
+
 void CMapWidget::DefineLabelsToDraw(const QList<CGeoResult>& geoResults, CGeoToScreen& transformer)
 {
     //Clear previous results
@@ -210,6 +225,10 @@ void CMapWidget::DefineLabelsToDraw(const QList<CGeoResult>& geoResults, CGeoToS
 
     for (const CGeoResult& geoResult : geoResults)
     {
+        //Can continue if not showing this label
+        if (!geoResult.showLabel)
+            continue;
+
         QString labelText = geoResult.m_name.c_str();
         if (processedNames.contains(labelText))
             continue;

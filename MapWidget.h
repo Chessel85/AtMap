@@ -33,6 +33,7 @@ public:
 //Methods
 public:
     void receiveMapData(const QList<CGeoResult>& geoResults, const NRList& pointResults, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& topright, CGeoToScreen& transformer );
+    void copyMapToClipboard();
 
     //Slots
 

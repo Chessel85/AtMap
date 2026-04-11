@@ -145,10 +145,6 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
         scaleY = DEFAULT_VIEWABLE_AREA_SCALE * (double)height /(double)width;
     }
 
-    //Delegate calculation to the user object as it knows most of the useful data
-    //m_geoBottomLeft = m_User.CalculateSWOffset(scaleX, scaleY);
-    //m_geoTopRight = m_User.CalculateNEOffset(scaleX, scaleY);
-
     //Use transformer to get bottom left and top right coordinates 
     m_Transformer.SetScreenSize(QSizeF(width, height));
     const QGeoCoordinate centre = m_User.GetCoordinate();
@@ -170,7 +166,8 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
 
     //Ask the planet for polygons and points inside the visible area 
     int stepSize = m_User.GetStepSize();
-    retval = m_Planet.GetVisibleData(m_geoBottomLeft.latitude(), m_geoBottomLeft.longitude(), m_geoTopRight.latitude(), m_geoTopRight.longitude(), stepSize, geoResults, pointResults );
+    double zoomLevel = calculateZoomLevel();
+    retval = m_Planet.GetVisibleData(m_geoBottomLeft.latitude(), m_geoBottomLeft.longitude(), m_geoTopRight.latitude(), m_geoTopRight.longitude(), stepSize, zoomLevel, geoResults, pointResults );
 
     //Output how long querying the database took
     qDebug() << "MapManager Data querying took" << timer.elapsed() << "milliseconds to get" << geoResults.size() << " geoResults.";
@@ -347,3 +344,24 @@ void CMapManager::polygonPointAnalysis()
         qWarning() << "Could not open file for writing:" << file.errorString();
     }
     }
+
+double CMapManager::calculateZoomLevel()
+{
+    //Get largest dimension 
+    double maxDegrees = 0;
+    double widthDegrees = m_geoTopRight.longitude() - m_geoBottomLeft.longitude();
+    double heightDegrees = m_geoTopRight.latitude() - m_geoBottomLeft.latitude();
+    if (widthDegrees > heightDegrees)
+    {
+        maxDegrees = widthDegrees;
+    }
+    else
+    {
+        maxDegrees = heightDegrees;
+    }
+
+    double zoomLevel = log(180 / maxDegrees) / log(2);
+
+    return zoomLevel;
+}
+        

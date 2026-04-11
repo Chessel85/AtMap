@@ -16,13 +16,15 @@ SELECT
     MbrMaxX( p.polygon ), 
     MbrMaxY( p.polygon ), 
     p.labelX, 
-    p.labelY
+    p.labelY,
+    :zoomLevel > p.minLabelZoomLevel AS showLabel  
   FROM 
     spt_polygons AS p
     JOIN tbl_layers AS l ON l.layerId = p.layerId 
   WHERE 
-    l.selected = 1 
-    AND p.polygon IS NOT NULL
+    l.selected = 1  AND
+    :zoomLevel > p.minZoomLevel   AND
+    p.polygon IS NOT NULL
     -- Spatial Index Filter
     AND p.ROWID IN (
         SELECT ROWID FROM SpatialIndex 

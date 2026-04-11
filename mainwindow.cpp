@@ -72,12 +72,10 @@ void MainWindow::SetupMainMenu()
     outlineAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
     connect(outlineAction, &QAction::triggered, this, &MainWindow::onOutlineTriggered);
 
-    //Layers dialog
-    QAction* layersAction = viewMenu->addAction(tr( "&Layers..."));
-    layersAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
-    connect(layersAction, &QAction::triggered, this, &MainWindow::onLayersTriggered);
-
-
+    //Copy map to clipboard 
+    QAction* clipboardAction = viewMenu->addAction(tr("&Copy map to clipboard"));
+    clipboardAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
+    connect(clipboardAction, &QAction::triggered, m_pMapArea, &CMapWidget::copyMapToClipboard);
 
     //Add to map menu 
     //Goto coordinates 
@@ -90,13 +88,16 @@ void MainWindow::SetupMainMenu()
     searchLocationAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_E));
     connect(searchLocationAction, &QAction::triggered, this, &MainWindow::onSearchLocationTriggered);
 
+    //Create menu items for base layers dynamically dependent on what is in database
+    setupBaseLayerMenus(mapMenu);
 
     //Put in a seperator 
     mapMenu->addSeparator();
 
-
-    //Create menu items for base layers dynamically dependent on what is in database
-    setupBaseLayerMenus(mapMenu);
+    //Layers dialog
+    QAction* layersAction = mapMenu->addAction(tr("&Layers..."));
+    layersAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
+    connect(layersAction, &QAction::triggered, this, &MainWindow::onLayersTriggered);
 
     //Help menu
     QAction* documentationAction = helpMenu->addAction(tr("&Documentation"));
@@ -169,9 +170,6 @@ void MainWindow::SetupWidgets(const QString& dbFilename)
     //Need to create map manager early as some of the user interface needs data from it 
     m_pMapManager = new CMapManager(dbFilename, this);
 
-    //Create the menu 
-    SetupMainMenu();
-
     //Create main splitter
     QSplitter* pMainSplitter = new QSplitter(Qt::Horizontal, this);
     setCentralWidget(pMainSplitter);
@@ -221,6 +219,9 @@ void MainWindow::SetupWidgets(const QString& dbFilename)
     //Set ratio of top and bottom of right splitter
     pRightSplitter->setStretchFactor(0, 1);
     pRightSplitter->setStretchFactor(1, 2);
+
+    //Create the menu 
+    SetupMainMenu();
 }
 
 void MainWindow::SetupConnects()

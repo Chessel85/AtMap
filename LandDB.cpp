@@ -703,7 +703,7 @@ bool CLandDB::IsOnLand(double x, double y)
     return bIsOnLand;
 }
 
-int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, QList<CGeoResult>& geoResults)
+int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, double zoomLevel, QList<CGeoResult>& geoResults)
 {
     QElapsedTimer timer;
     timer.start();
@@ -733,6 +733,7 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
     rc = sqlite3_bind_double(stmt, 2, south);
     rc = sqlite3_bind_double(stmt, 3, east);
     rc = sqlite3_bind_double(stmt, 4, north);
+    rc = sqlite3_bind_double(stmt, 5, zoomLevel);
 
     // Execute the query
     rc = 0;
@@ -751,6 +752,8 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
             geoResult.m_maxY = (double)(sqlite3_column_double(stmt, 6));
             geoResult.m_labelX = (double)(sqlite3_column_double(stmt, 7));
             geoResult.m_labelY = (double)(sqlite3_column_double(stmt, 8));
+            geoResult.showLabel= (int)(sqlite3_column_int(stmt, 9));
+
             //Add retrieved data to result set 
             geoResults.push_back(geoResult);
         }
@@ -771,7 +774,7 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
     return retval;
 }
 
-int CLandDB::GetVisibleCities(double south, double west, double north, double east, int minPopulation, NRList& pointResults)
+int CLandDB::GetVisiblePoints(double south, double west, double north, double east, double zoomLevel, NRList& pointResults)
 {
     QElapsedTimer timer;
     timer.start();
@@ -782,9 +785,9 @@ int CLandDB::GetVisibleCities(double south, double west, double north, double ea
     sqlite3_stmt* stmt;
 
     //The query 
-    std::string sQuery = GetQueryFromScript("SelectVisibleCitiesByCapitalAndPopulation.sql");
+    std::string sQuery = GetQueryFromScript("SelectVisiblePoints.sql");
     int rc = sqlite3_prepare_v2(m_LandDB, sQuery.c_str(), -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
+    if( !stmt ) 
     {
         std::string error = sqlite3_errmsg(m_LandDB);
         QString qe = QString(error.c_str());
@@ -793,11 +796,11 @@ int CLandDB::GetVisibleCities(double south, double west, double north, double ea
     }
 
     //Bind values to statement
-    rc = sqlite3_bind_double(stmt, 1, west);
-    rc = sqlite3_bind_double(stmt, 2, south);
-    rc = sqlite3_bind_double(stmt, 3, east);
-    rc = sqlite3_bind_double(stmt, 4, north);
-    rc = sqlite3_bind_int(stmt, 5, minPopulation);
+        rc = sqlite3_bind_double(stmt, 1, zoomLevel);
+    rc = sqlite3_bind_double(stmt, 2, west);
+    rc = sqlite3_bind_double(stmt, 3, south);
+    rc = sqlite3_bind_double(stmt, 4, east);
+    rc = sqlite3_bind_double(stmt, 5, north);
 
     // Execute the query
     rc = 0;
@@ -808,9 +811,8 @@ int CLandDB::GetVisibleCities(double south, double west, double north, double ea
         {
             nearbyResult nrResult;
             nrResult.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            nrResult.elementID = (int)(sqlite3_column_int(stmt, 1));
-            nrResult.longitude = (double)(sqlite3_column_double(stmt, 2));
-            nrResult.latitude = (double)(sqlite3_column_double(stmt, 3));
+            nrResult.longitude = (double)(sqlite3_column_double(stmt, 1));
+            nrResult.latitude = (double)(sqlite3_column_double(stmt, 2));
 
             //Add retrieved data to result set 
             pointResults.push_back(nrResult);

@@ -101,7 +101,7 @@ int CPlanet::GetContainedPoints(int relationID, double x, double y, NRList& poin
     return res;
 }
 
-int CPlanet::GetVisibleData(double south, double west, double north, double east, double stepSize, QList<CGeoResult>& geoResults, NRList& pointResults)
+int CPlanet::GetVisibleData(double south, double west, double north, double east, double stepSize, double zoomLevel, QList<CGeoResult>& geoResults, NRList& pointResults)
 {
     int retval = 0;
 
@@ -112,24 +112,24 @@ int CPlanet::GetVisibleData(double south, double west, double north, double east
     //Translate step size to a zoom band
     int zoomBand = getZoomBand(stepSize);
     //Get polygons first 
-    retval = m_LandDB.GetVisibleLandPolygonsWKT(south, west, north, east, zoomBand, geoResults  );
+    retval = m_LandDB.GetVisibleLandPolygonsWKT(south, west, north, east, zoomBand, zoomLevel, geoResults  );
 
     //If that went okay and there is a split get data from other bounding box
     if (split && retval== 0 )
     {
-        retval = m_LandDB.GetVisibleLandPolygonsWKT(south2, west2, north2, east2, zoomBand, geoResults);
+        retval = m_LandDB.GetVisibleLandPolygonsWKT(south2, west2, north2, east2, zoomBand, zoomLevel, geoResults);
     }
     
     //If that went okay get point data 
     if (retval == 0)
     {
         int populationThreshold = TransformZoomBandToPopulation(zoomBand );
-        retval = m_LandDB.GetVisibleCities(south, west, north, east, populationThreshold, pointResults);
+        retval = m_LandDB.GetVisiblePoints(south, west, north, east, zoomLevel, pointResults);
 
         //If okay and there is a split get cities in second bounding box
         if (split && retval == 0)
         {
-            retval = m_LandDB.GetVisibleCities(south2, west2, north2, east2, populationThreshold, pointResults);
+            retval = m_LandDB.GetVisiblePoints(south2, west2, north2, east2, zoomLevel, pointResults);
         }
     }
     return retval;

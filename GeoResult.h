@@ -23,4 +23,5 @@ public:
     double m_maxY;
     double m_labelX; //Coordinates of label
     double m_labelY;
+    int showLabel;
 };

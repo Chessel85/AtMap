@@ -29,7 +29,7 @@ public:
     int GetCurrentLocationName(double x, double y, std::string& name, int& objectID );
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);
     int GetContainedPoints(int relationID, double x, double y, NRList& pointResults);
-    int GetVisibleData(double south, double west, double north, double east, double stepSize, QList<CGeoResult>& geoResults, NRList& pointResults);
+    int GetVisibleData(double south, double west, double north, double east, double stepSize, double zoomLevel, QList<CGeoResult>& geoResults, NRList& pointResults);
     int GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResults);
     int getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon);
     int SearchNames(std::string searchText, NRList& nrResults);

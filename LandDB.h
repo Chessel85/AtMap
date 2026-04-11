@@ -32,9 +32,9 @@ public:
     double Bearing(CLongLat p1, CLongLat p2);
     int SearchNames(std::string rsSearchTerm, NRList& nrResults);
     std::string  GetWikipediaValue(int type, int ID);
-    int GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, QList<CGeoResult>& geoResults);
+    int GetVisibleLandPolygonsWKT(double south, double west, double north, double east, int zoomBand, double zoomLevel, QList<CGeoResult>& geoResults);
     int getSpecificPolygon(int polygonId, QList<CGeoResult>& polygon);
-    int GetVisibleCities(double south, double west, double north, double east, int minPopulation, NRList& pointResults);
+    int GetVisiblePoints(double south, double west, double north, double east, double zoomLevel, NRList& pointResults);
     int GetVisiblePoints(double south, double west, double north, double east, NRList& pointResults);
     int GetBorderingRelations(int objectID, double x, double y, NRList& relResults);
     int GetContainedPoints(int relationID, double x, double y, NRList& pointResults);

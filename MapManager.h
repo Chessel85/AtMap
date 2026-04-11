@@ -62,6 +62,7 @@ public slots:
 //Scratch private function for testing matching points from two bordering relations
 private:
     void polygonPointAnalysis();
+    double calculateZoomLevel();
 
     //Member variables
 private:
