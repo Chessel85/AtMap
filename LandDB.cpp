@@ -1,5 +1,6 @@
 //LandDB.cpp
 #include "LandDB.h"
+#include "initManager.h"
 #include <iostream>
 #include <stdlib.h>
 #include <string>
@@ -591,7 +592,7 @@ int CLandDB::SearchNames(std::string rsText, NRList& nrResults)
 
 std::string CLandDB::GetQueryFromScript(std::string rsScriptFilename)
 {
-    std::string queryPath = SCRIPTS_PATH + rsScriptFilename;
+    std::string queryPath = SCRIPTS_PATH.toStdString()  + rsScriptFilename;
 
     std::ifstream file(queryPath);
     if (!file.is_open())

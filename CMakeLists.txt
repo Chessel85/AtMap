@@ -149,17 +149,6 @@ if(NOT MSVC)
     install(TARGETS AtMap RUNTIME DESTINATION bin)
 endif()
 
-# Provide C++ code with direct paths to the MASTER folders
-    # We use escaped quotes so the compiler sees a standard string literal
-    target_compile_definitions(AtMap PRIVATE 
-        _CONSOLE WIN32 WIN64 _MBCS 
-        _CRT_NON_CONFORMING_SWPRINTFS 
-        _CRT_SECURE_NO_WARNINGS
-        _ENABLE_EXTENDED_ALIGNED_STORAGE
-        DATA_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/"
-        SCRIPTS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scripts/"
-        SOUNDS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/sounds/"
-    )
 # Sets AtMap as the default "Startup Project" when you open the .sln
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT AtMap)
 

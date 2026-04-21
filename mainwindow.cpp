@@ -155,7 +155,7 @@ void MainWindow::setupBaseLayerMenus(QMenu* mapMenu)
         // Set Shortcut
         if (shortcutCounter < 9)
         {
-            action->setShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + shortcutCounter)));
+            action->setShortcut(QKeySequence(Qt::CTRL | ((Qt::Key_1 + shortcutCounter ) )));
             shortcutCounter++;
         }
 
@@ -386,7 +386,7 @@ void MainWindow::showAboutDialog()
 void MainWindow::showDocumentation()
 {
     //Create path based on application path plus Documentation subfolder 
-    QString docPath = QCoreApplication::applicationDirPath() + "/Documents/Accessible Atlas documentation.html";
+    QString docPath = QCoreApplication::applicationDirPath() + "/Documents/AtMap documentation.html";
 
     //Call desktop services to open the HTML file 
     QDesktopServices::openUrl(QUrl::fromLocalFile(docPath));
