@@ -7,6 +7,7 @@
 //declare static member variables outside of class to allocate memory correctly 
 QString CInitManager::m_dataPath = "";
 QString CInitManager::m_scriptsPath = "";
+QString CInitManager::m_soundsPath = "";
 
 CInitManager::CInitManager()
 {
@@ -18,10 +19,11 @@ CInitManager::~CInitManager()
 
 bool CInitManager::resolvePaths()
 {
-    m_dataPath = getSubfolderPath( "data" );
-    m_scriptsPath = getSubfolderPath( "scripts" );
+    m_dataPath = getSubfolderPath("data");
+    m_scriptsPath = getSubfolderPath("scripts");
+    m_soundsPath = getSubfolderPath("sounds");
 
-    if (m_dataPath.isEmpty() || m_scriptsPath.isEmpty()) 
+    if (m_dataPath.isEmpty() || m_scriptsPath.isEmpty() || m_soundsPath.isEmpty()  )
     {
         return false;
     }
@@ -64,23 +66,23 @@ bool CInitManager::copyDatabaseToAppLocal(QString& filename)
 
     //Only proceed if the database is not already in appdata local 
     QString nameDb = "land.db";
-    QFile qf( localPath + "/" + nameDb);
+    QFile qf(localPath + "/" + nameDb);
     filename = qf.fileName();
-    if (qf.exists() )
+    if (qf.exists())
         return true;
 
     //Get the database file 
-    QFile sourceFile( DATA_PATH + "land.db" );
+    QFile sourceFile(DATA_PATH + "land.db");
 
     //Check it exists 
-    if (!sourceFile.exists() ) 
+    if (!sourceFile.exists())
     {
         filename = "";
         return false;
     }
 
     //Do the copy from source to app data local 
-    if (!sourceFile.copy(qf.fileName()  ))
+    if (!sourceFile.copy(qf.fileName()))
     {
         qCritical() << "File Error: Found source database but copy to appdata/local failed." << sourceFile.errorString();
         filename = "";
@@ -89,7 +91,7 @@ bool CInitManager::copyDatabaseToAppLocal(QString& filename)
 
     // Ensure the user has full permissions to write to their local copy
     qf.setPermissions(QFile::WriteOwner | QFile::ReadOwner | QFile::WriteUser | QFile::ReadUser);
-    qDebug() << "Success: Database copied from" << sourceFile.fileName()  << "to" << filename;
+    qDebug() << "Success: Database copied from" << sourceFile.fileName() << "to" << filename;
 
     return true;
 }

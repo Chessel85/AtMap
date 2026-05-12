@@ -21,8 +21,6 @@
 #include "gotoLocationDialog.h"
 #include "RedrawReason.h"
 
-
-
 MainWindow::MainWindow(const QString& dbFilename, QWidget* parent)
     : QMainWindow(parent)
 {
@@ -31,6 +29,10 @@ MainWindow::MainWindow(const QString& dbFilename, QWidget* parent)
 
     //Now all objects exist, and to keep them all in one place, create connects
     SetupConnects();
+
+    //Setup sounds 
+    setupSounds();
+
 
     //Set title of main window
     setWindowTitle("AtMap");
@@ -262,6 +264,36 @@ void MainWindow::SetupConnects()
     //InfoPane says a location has been selected 
     connect(m_pInfoPane, &CInfoPane::locationSelected, this, &MainWindow::handleLocationSelected);
 }
+
+void MainWindow::setupSounds()
+{
+    //Set up sound engine 
+    int res = m_soundEngine.initialise();
+    if (res != 0)
+    {
+        qDebug() << "Failed to initialise sound engine." ;
+        return;
+    }
+
+    bool ok = m_sourceManager.initialize(m_soundEngine.Context());
+    if (!ok)
+    {
+        qDebug() << "Failed to initialise sound source manager.";
+        return;
+    }
+
+    //Load sound files into buffers 
+    int numBuffers = m_sourceManager.loadBuffers();
+    if (numBuffers == 0 )
+    {
+        qDebug() << "No sound buffers loaded into sound source manager.";
+    }
+
+
+    //Play some music
+    m_sourceManager.playMusic();
+    }
+
 
 void MainWindow::showEvent(QShowEvent* event)
 {

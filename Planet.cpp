@@ -13,53 +13,32 @@ CPlanet::CPlanet()
 
 CPlanet::~CPlanet()
 {
-    m_WaterDB.FreeDatabase();
     m_LandDB.FreeDatabase();
-    m_LandByCoastlineDB.FreeDatabase();
 }
 
 void CPlanet::InitialiseDatabases( const QString& dbFilename )
 {
-    m_WaterDB.InitialiseWaterDatabase();
     m_LandDB.InitialiseLandDatabase( dbFilename );
-    m_LandByCoastlineDB.InitialiseDatabase();
     }
-
-bool CPlanet::DatabasesOK()
-{
-    return m_WaterDB.IsOK();
-}
 
 int CPlanet::GetCurrentLocationName(double x, double y, std::string& name, int& objectID )
 {
-    //Test the land by coastline database to accurately see if on land or not
-    //Coastline database currently set to land.db so actually using single database for both land detection and getting data about land 
-    m_onLand = true; //  m_LandByCoastlineDB.IsOnLand(x, y);
-
-    //If on land query the land database to get name of the land otherwise use water database to get name of sea 
-    if (m_onLand)
+    NRList landLocations;
+    landLocations = m_LandDB.FullListOfOSMLand(x, y);
+    if (landLocations.size() > 0)
     {
-        NRList landLocations;
-        landLocations = m_LandDB.FullListOfOSMLand(x, y);
-        if (landLocations.size() > 0)
+        //Cycle through results to concatenate the list of place names
+        for (auto it = landLocations.begin(); it != landLocations.end(); it++)
         {
-            //Cycle through results to concatenate the list of place names
-            for (auto it = landLocations.begin(); it != landLocations.end(); it++)
-            {
-                nearbyResult nr = *it;
-                name += (nr.name + ",");
-            }
-            name[name.size() - 1] = ' ';
-            objectID = landLocations.front().elementID ;
+            nearbyResult nr = *it;
+            name += (nr.name + ",");
         }
-        else
-        {
-            name = "Unknown";
-        }
+        name[name.size() - 1] = ' ';
+        objectID = landLocations.front().elementID;
     }
     else
     {
-        m_WaterDB.NameOfWater(x, y, name, objectID );
+        name = "Unknown";
     }
 
     //Return something for now
@@ -76,15 +55,7 @@ int CPlanet::GetBorderingRelations(int objectID, double x, double y, NRList& rel
 {
     int res = 0;
 
-    if (m_onLand)
-    {
-        res = m_LandDB.GetBorderingRelations(objectID, x, y, relResults);
-    }
-    else
-    {
-        //On water
-        res = m_WaterDB.GetBorderingSeas(objectID, x, y, relResults);
-    }
+    res = m_LandDB.GetBorderingRelations(objectID, x, y, relResults);
 
     return res;
 }

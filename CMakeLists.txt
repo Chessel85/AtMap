@@ -21,23 +21,13 @@ else()
     )
 endif()
 
-# Dependencies path definitions 
-# Uncomment the following lines once you have put your own paths in 
-# set(SQLITE3_ROOT "C:/<YourPath>/sqlite3" CACHE PATH "Path to SQLite3 source")
-# set(OSGEO4W_ROOT "C:/<YourPath>/OSGeo4W" CACHE PATH "Path to OSGeo4W installation")
-
 # Automatic handling of Qt specialized files (MOC, UI, RCC)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-
 # QT path setup
-# OPTION 1: Manual Override (Uncomment the line below for your local use)
-# set(CMAKE_PREFIX_PATH "C:/Qt/6.9.1/msvc2022_64")
-
-# If CMAKE_PREFIX_PATH was not set on the command line OR uncommented above, 
-find_package(Qt6 COMPONENTS Core Gui Widgets Positioning QUIET)
+find_package(Qt6 COMPONENTS Core Gui Widgets Positioning SpatialAudio QUIET)
 if(NOT Qt6_FOUND)
     message(FATAL_ERROR 
         "\n--------------------------------------------------------------------------\n"
@@ -75,12 +65,16 @@ set(PROJECT_SOURCES
     LongLat.cpp
     GeoResult.cpp
     GeoToScreen.cpp
-    IntelliLand.cpp
-    LandByCoastlineDB.cpp
     LandDB.cpp
-    WaterDB.cpp
-    # Headers are usually not strictly required in PROJECT_SOURCES for CMake,
-    # but adding them ensures they show up in the MSVC Solution Explorer.
+    soundEngine.cpp
+    sourceManager.cpp
+    soundSource.cpp
+    directSource.cpp
+    stereoSource.cpp
+    spatialSource.cpp
+    soundBuffer.cpp
+    beacon.cpp
+    # adding header files ensures they show up in the MSVC Solution Explorer.
     messageHandler.h
     initManager.h
     mainwindow.h
@@ -105,16 +99,29 @@ set(PROJECT_SOURCES
     GeoToScreen.h
     StepSizes.h
     RedrawReason.h
-    IntelliLand.h
-    LandByCoastlineDB.h
     LandDB.h
-    WaterDB.h
+    soundEngine.h
+    sourceManager.h
+    soundSource.h
+    directSource.h
+    stereoSource.h
+    spatialSource.h
+    soundBuffer.h
+    beacon.h
+    soundTypes.h
+    soundSourceCategories.h
     aliases.h
     AtMap.rc
 )
 
 # Create the Executable
-qt_add_executable(AtMap WIN32 ${PROJECT_SOURCES})
+# this version does not have a console window qt_add_executable(AtMap WIN32 ${PROJECT_SOURCES})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    qt_add_executable(AtMap ${PROJECT_SOURCES})
+else()
+    qt_add_executable(AtMap WIN32 ${PROJECT_SOURCES})
+endif()
+
 
 # Include Directories (Mapping to your INCLUDEPATH)
 # Check path variables are set
@@ -128,8 +135,13 @@ if(NOT EXISTS "${OSGEO4W_ROOT}/include/proj.h")
     message(FATAL_ERROR "OSGEO4W_ROOT is incorrect. Could not find include/proj.h at: ${OSGEO4W_ROOT}")
 endif()
 
+if(NOT EXISTS "${SYNTHIZER_ROOT}/include/synthizer.h")
+    message(FATAL_ERROR "SYNTHIZER_ROOT is missing or incorrect: ${SYNTHIZER_ROOT}")
+endif()
+
 # use path variables  to define  include paths 
 target_include_directories(AtMap PRIVATE
+    "${SYNTHIZER_ROOT}/include"
     "${SQLITE3_ROOT}/src"
     "${OSGEO4W_ROOT}/include"
 )
@@ -140,6 +152,8 @@ target_link_libraries(AtMap PRIVATE
     Qt6::Gui
     Qt6::Widgets
     Qt6::Positioning
+    Qt6::SpatialAudio
+    "${SYNTHIZER_ROOT}/lib/synthizer.lib"
     "${SQLITE3_ROOT}/lib/sqlite3.lib"
     "${OSGEO4W_ROOT}/lib/proj.lib"
 )

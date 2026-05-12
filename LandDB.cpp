@@ -205,7 +205,7 @@ NRList    CLandDB::FullListOfOSMLand(double x, double y)
         double area = sqlite3_column_double(stmt, 2);
         int displayOrder = sqlite3_column_int(stmt, 3);
         nearbyResult landResult;
-        landResult.elementType - 3;
+        landResult.elementType = 3;
         landResult.elementID = polygonId;
         landResult.name = name;
         landResult.area = area;

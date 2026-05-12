@@ -22,7 +22,6 @@ public:
 //Methods 
 public:
     void InitialiseDatabases( const QString& dbFilename );
-    bool DatabasesOK();
     bool getLayerData(CLayerManager& layerManager);
     bool setLayers(const QMap<int, bool>& layerStates);
     bool setBaseLayer(int layerId);
@@ -43,9 +42,7 @@ private:
 
 //Member variables
 private:
-    CWaterDB m_WaterDB;
     CLandDB m_LandDB;
-    CLandByCoastlineDB m_LandByCoastlineDB;
     double m_Radius; //In km
     bool  m_onLand;
 };

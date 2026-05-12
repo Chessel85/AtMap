@@ -13,9 +13,13 @@
 #include "GeoResult.h"
 #include <qlist.h>
 #include "mapViewType.h"
+#include "soundEngine.h"
+#include "sourceManager.h"
+
 
 //Predefines
 class QAction;
+class QAudioListener;
 
 class MainWindow : public QMainWindow
 {
@@ -33,6 +37,7 @@ private:
     void setupBaseLayerMenus(QMenu* mapMenu );
     void SetupWidgets( const QString& dbFilename );
     void SetupConnects();
+    void setupSounds();
     void UpdateInfoPane( );
     bool HandleF6AndTabKeyEvents(QKeyEvent* pKeyEvent);
     void syncLayerMenus();
@@ -94,4 +99,8 @@ private:
 
     //Helpers 
     QMap<int, QAction*> m_layerActions; 
+
+    //Sounds
+    CSoundEngine m_soundEngine;
+    CSourceManager m_sourceManager;
 };
