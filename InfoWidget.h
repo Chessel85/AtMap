@@ -2,11 +2,10 @@
 
 #pragma once
 
-#include <QListWidget.h>
-#include <QObject.h>
+#include <QListWidget>
 #include <QKeyEvent> 
-#include <QGeocoordinate.h>
-#include <qvariant.h>
+#include <QGeoCoordinate>
+#include <QVariant>
 #include "aliases.h"
 
 // Define roles for our custom data
@@ -15,8 +14,12 @@ enum class InfoRoles
     DistanceRole = Qt::UserRole + 1,
     BearingRole,
     midXRole,
-    midYRole
+    midYRole,
+    beaconRole
 };
+
+//Predefines
+class CBeacon;
 
 class CInfoWidget : public QListWidget
 {
@@ -25,21 +28,27 @@ class CInfoWidget : public QListWidget
 //Constructor
 public:
     explicit CInfoWidget(QWidget* parent = nullptr);
+    ~CInfoWidget() override;
 
 //Methods
 public:
     void PopulateList(const NRList& relResult);
 
-    //Slots
-
+//Overrides
 protected:
     void keyPressEvent(QKeyEvent* event) override;
-    void itemDoubleClicked(QListWidgetItem* item);
+
+    //Slots
+protected:
+    void onCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void onItemDoubleClicked(QListWidgetItem* item);
 
 signals:
     void childLocationSelected(const QGeoCoordinate& coordinate);
+    void beaconSelected(CBeacon* beacon);
 
 private:
+    void destroyBeacons();
 
 //Member variables
 private:

@@ -13,7 +13,7 @@ CBeacon::CBeacon()
     m_posX = 0.0;
     m_posY = 0.0;
     m_posZ = 0.0;
-    m_soundType = SoundType::standard;
+    m_soundType = DEFAULT_SOUND_TYPE;
 }
 
 void CBeacon::setPosition(double  x, double  y, double z)
@@ -30,13 +30,13 @@ void CBeacon::getPosition(double& x, double& y, double& z) const
     z = m_posZ;
 }
 
-void CBeacon::initialise(SoundType type, SourceCategory cat )
+void CBeacon::initialise(const QString& type, SourceCategory cat )
 {
     m_soundType = type;
     m_sourceCategory = cat;
 }
 
-SoundType CBeacon::getSoundType() const
+QString CBeacon::getSoundType() const
 {
     return m_soundType;
 }

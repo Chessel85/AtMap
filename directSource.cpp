@@ -17,6 +17,27 @@ CDirectSource::~CDirectSource()
     // Base class destructor handles cleanup of m_source and m_generator
 }
 
+bool CDirectSource::isReady() const
+{
+    //Check the context in the base class
+    if (!CSoundSource::isReady())
+        return false;
+
+    //Check source is initialised 
+    if (m_source == 0)
+        return false;
+
+    //Check the source type 
+    int sourceType;
+    if (syz_handleGetObjectType(&sourceType, m_source) != 0)
+        return false;
+
+    if (sourceType != SYZ_OTYPE_DIRECT_SOURCE)
+        return false;
+
+    return true;
+}
+
 int CDirectSource::addStream(const std::string& filePath)
 {
     //check context and source are valid from base class 
@@ -71,21 +92,3 @@ int CDirectSource::pauseStream()
     return 0;
 }
 
-int CDirectSource::setPan(double pan)
-{
-    // Note: SYZ_OTYPE_DIRECT_SOURCE does not support SYZ_P_PANNING_SCALAR.
-    // This method is now a no-op or could return an error.
-    return -1;
-}
-
-int CDirectSource::setLooping(bool looping)
-{
-    if (m_generator == 0) 
-        return -1;
-
-    if (syz_setI(m_generator, SYZ_P_LOOPING, looping ? 1 : 0) != 0)
-    {
-        return -1;
-    }
-    return 0;
-}

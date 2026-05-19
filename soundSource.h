@@ -3,30 +3,32 @@
 
 #include <synthizer.h>
 #include <synthizer_constants.h>
-#include <string>
 
 class CSoundSource 
 {
-//Cponstructor
+//Constructor
 public:
     virtual ~CSoundSource();
 
 // Common functionality for all sound source objects
-    bool isReady() const;
+public:
+    virtual bool isReady() const;
     void destroy();
 
     // Shared parameters
+public:
     int setPitch(double pitch);
     int setGain(double gain);
+    int setLooping(bool looping);
 
     // Handles 
+public:
     syz_Handle getSourceHandle() const;
     syz_Handle getGeneratorHandle() const;
     void releaseHandle(syz_Handle& handle);
 
-
-protected:
-    // Protected constructor: ensures you must use a subclass
+    protected:
+    // Protected constructor: ensures must use a subclass
     CSoundSource(syz_Handle context);
 
 //Attributes

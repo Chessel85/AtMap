@@ -157,7 +157,7 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
     int retval = 0;
 
     //Get rid of any existing data
-    geoResults.clear();
+    geoResults.clear();    geoResults.clear();
     pointResults.clear();
 
 
@@ -167,7 +167,7 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
     //Ask the planet for polygons and points inside the visible area 
     int stepSize = m_User.GetStepSize();
     double zoomLevel = calculateZoomLevel();
-    retval = m_Planet.GetVisibleData(m_geoBottomLeft.latitude(), m_geoBottomLeft.longitude(), m_geoTopRight.latitude(), m_geoTopRight.longitude(), stepSize, zoomLevel, geoResults, pointResults );
+    retval = m_Planet.GetVisibleData(m_geoBottomLeft.latitude(), m_geoBottomLeft.longitude(), m_geoTopRight.latitude(), m_geoTopRight.longitude(), stepSize, zoomLevel, geoResults, pointResults);
 
     //Output how long querying the database took
     qDebug() << "MapManager Data querying took" << timer.elapsed() << "milliseconds to get" << geoResults.size() << " geoResults.";

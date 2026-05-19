@@ -2,16 +2,23 @@
 #pragma once
 
 #include "synthizer.h"
+#include <QObject>
 #include <string>
 #include <QMap>
+#include "spatialSource.h"
 #include "soundType.h"
 
 //Predefines
 class CDirectSource;
 class CSoundBuffer;
+class QSettings;
+class CBeacon;
 
-class CSourceManager 
+
+class CSourceManager  : public QObject 
 {
+    Q_OBJECT
+
 //Constructor
 public:
     CSourceManager();
@@ -23,15 +30,21 @@ public:
     void destroy();
     int playMusic();
     std::string getLastError() const;
-    int loadBuffers();
+    int loadFromINI();
+
+public slots:
+    void playBeacon(CBeacon* beacon);
 
 private:
-    SoundType stringToType(const QString& str) const;
-    CSoundBuffer* getBuffer(SoundType type) const;
+    void loadBuffers(const QString& baseDir, QSettings& settings);
+    void  loadLayers(QSettings& settings);
+    CSoundBuffer* getBuffer(const QString& type) const;
 
 //Attributes
 private:
     syz_Handle m_context;
     CDirectSource* m_musicSource;
-    QMap<SoundType, CSoundBuffer*> m_buffers;
+    CSpatialSource* m_spatialSource;
+    QMap<QString, CSoundBuffer*> m_buffers;
+    QMap<QString, QString> _layersToSoundType;
 };

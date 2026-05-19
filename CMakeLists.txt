@@ -27,7 +27,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # QT path setup
-find_package(Qt6 COMPONENTS Core Gui Widgets Positioning SpatialAudio QUIET)
+find_package(Qt6 COMPONENTS Core Gui Widgets Positioning QUIET)
 if(NOT Qt6_FOUND)
     message(FATAL_ERROR 
         "\n--------------------------------------------------------------------------\n"
@@ -152,11 +152,15 @@ target_link_libraries(AtMap PRIVATE
     Qt6::Gui
     Qt6::Widgets
     Qt6::Positioning
-    Qt6::SpatialAudio
     "${SYNTHIZER_ROOT}/lib/synthizer.lib"
     "${SQLITE3_ROOT}/lib/sqlite3.lib"
     "${OSGEO4W_ROOT}/lib/proj.lib"
 )
+
+set_target_properties(AtMap PROPERTIES
+    WIN32_EXECUTABLE FALSE  # Keep the console window for debugging
+)
+
 
 # Deployment / Install Rules (Optional)
 if(NOT MSVC)

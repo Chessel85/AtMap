@@ -9,6 +9,10 @@
 #include <qvariant.h>
 #include "aliases.h"
 
+//Predeclaration 
+class CBeacon;
+
+
 class CInfoPane : public QWidget 
 {
     Q_OBJECT
@@ -41,6 +45,7 @@ signals:
     void GetContainedPoints(NRList& cityResults);
     void GetLayers( GLList& layerResults);
     void locationSelected(const QGeoCoordinate& coordinate);
+    void beaconSelected(CBeacon* beacon);
 
 //Member variables
 private:

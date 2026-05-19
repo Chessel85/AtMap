@@ -20,19 +20,23 @@
 #include "layersDialog.h"
 #include "gotoLocationDialog.h"
 #include "RedrawReason.h"
+#include "beacon.h" 
 
 MainWindow::MainWindow(const QString& dbFilename, QWidget* parent)
     : QMainWindow(parent)
 {
+    m_pMapManager = nullptr;
+    m_soundEngine = nullptr;
+    m_sourceManager = nullptr;
+
+    //Setup sounds 
+    setupSounds();
+
     //Create the widget structure of map, compass and info pane
     SetupWidgets(dbFilename);
 
     //Now all objects exist, and to keep them all in one place, create connects
     SetupConnects();
-
-    //Setup sounds 
-    setupSounds();
-
 
     //Set title of main window
     setWindowTitle("AtMap");
@@ -47,6 +51,9 @@ MainWindow::MainWindow(const QString& dbFilename, QWidget* parent)
 
 MainWindow::~MainWindow()
 {
+    delete m_pMapManager;
+    delete m_sourceManager;
+    delete m_soundEngine;
 }
 
 void MainWindow::SetupMainMenu()
@@ -263,19 +270,27 @@ void MainWindow::SetupConnects()
 
     //InfoPane says a location has been selected 
     connect(m_pInfoPane, &CInfoPane::locationSelected, this, &MainWindow::handleLocationSelected);
+
+    //Link up info pane play beacons to source manager 
+    connect(m_pInfoPane, &CInfoPane::beaconSelected,
+        m_sourceManager, &CSourceManager::playBeacon);
 }
 
 void MainWindow::setupSounds()
 {
     //Set up sound engine 
-    int res = m_soundEngine.initialise();
+    m_soundEngine = new CSoundEngine();
+    int res = m_soundEngine->initialise();
     if (res != 0)
     {
         qDebug() << "Failed to initialise sound engine." ;
         return;
     }
+    m_soundEngine->setPosition(0, 0, 0);
+    m_soundEngine->setOrientation(0, 0, -1, 0, 1, 0);
 
-    bool ok = m_sourceManager.initialize(m_soundEngine.Context());
+    m_sourceManager = new CSourceManager;
+    bool ok = m_sourceManager->initialize(m_soundEngine->Context());
     if (!ok)
     {
         qDebug() << "Failed to initialise sound source manager.";
@@ -283,7 +298,7 @@ void MainWindow::setupSounds()
     }
 
     //Load sound files into buffers 
-    int numBuffers = m_sourceManager.loadBuffers();
+    int numBuffers = m_sourceManager->loadFromINI();
     if (numBuffers == 0 )
     {
         qDebug() << "No sound buffers loaded into sound source manager.";
@@ -291,7 +306,7 @@ void MainWindow::setupSounds()
 
 
     //Play some music
-    m_sourceManager.playMusic();
+    m_sourceManager->playMusic();
     }
 
 
@@ -304,7 +319,8 @@ void MainWindow::showEvent(QShowEvent* event)
     if (m_bInitialShow)
     {
         m_bInitialShow = false;
-        m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrBoth, m_geoResults, m_pointResults);
+        if( m_pMapManager )
+            m_pMapManager->UpdateMapData(m_pMapArea->width(), m_pMapArea->height(), rrBoth, m_geoResults, m_pointResults);
     }
 }
 

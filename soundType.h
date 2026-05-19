@@ -1,7 +1,9 @@
 //soundType.h
 #pragma once
+#include <QString>
 
-enum class SoundType
+const QString DEFAULT_SOUND_TYPE = "standard";
+/*enum class SoundType
 {
     standard,
     city,
@@ -12,9 +14,9 @@ enum class SoundType
     railwayStation,
     latitudeLine,
     longitudeLine
-};
+};*/
 
-// Enum to categorize our reusable "Virtual Speakers"
+// Enum to categorize the reusable Speakers
 enum class SourceCategory
 {
     spatial,    // 3D/HRTF for map objects

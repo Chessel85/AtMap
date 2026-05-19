@@ -101,6 +101,6 @@ private:
     QMap<int, QAction*> m_layerActions; 
 
     //Sounds
-    CSoundEngine m_soundEngine;
-    CSourceManager m_sourceManager;
+    CSoundEngine* m_soundEngine;
+    CSourceManager* m_sourceManager;
 };

@@ -2,7 +2,7 @@
 #include "soundEngine.h"
 #include <stdio.h>
 
-const double DEFAULT_VOLUME = 0.25;
+const double DEFAULT_VOLUME = 1.0;
 
 CSoundEngine::CSoundEngine()
 {

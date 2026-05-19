@@ -76,7 +76,7 @@ int CSoundBuffer::loadBuffers(const QString& path, const QString& prefix)
     QDir directory(path);
     if (!directory.exists()) 
     {
-        qDebug() << "Directory does not exist:" << path;
+        qDebug() << "Directory does not exist for loading sound files:" << path;
         return -1;
     }
 

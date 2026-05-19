@@ -5,7 +5,8 @@
 CSoundSource::CSoundSource(syz_Handle context)
     : m_context(context), m_source(0), m_generator(0)
 {
-    // Note: m_source and m_generator are initialized to 0. 
+    //the context is initialised just above 
+    // m_source and m_generator are initialized to 0 
     // The inheriting classes will populate these handles in their own constructors
 }
 
@@ -16,10 +17,8 @@ CSoundSource::~CSoundSource()
 
 bool CSoundSource::isReady() const
 {
-    //check we have handles for context and source 
+    //only check the context since the source is checked by the derived class 
     if (m_context == 0)
-        return false;
-    if (m_source == 0)
         return false;
 
     //get the object type 
@@ -29,31 +28,7 @@ bool CSoundSource::isReady() const
     if (contextType != SYZ_OTYPE_CONTEXT)
         return false;
 
-    //Check the source
-    int sourceType;
-    if (syz_handleGetObjectType(&sourceType, m_source) != 0)
-        return false;
-
-    if (sourceType!= SYZ_OTYPE_DIRECT_SOURCE )
-        return false;
-
     return true;
-}
-
-void CSoundSource::releaseHandle(syz_Handle& handle)
-{
-    if (handle != 0)
-    {
-        syz_handleDecRef(handle);
-        handle = 0;
-    }
-}
-
-void CSoundSource::destroy()
-{
-    // generators should be released before sources 
-    releaseHandle(m_generator);
-    releaseHandle(m_source);
 }
 
 int CSoundSource::setPitch(double pitch)
@@ -87,6 +62,14 @@ int CSoundSource::setGain(double gain)
     return 0;
 }
 
+int CSoundSource::setLooping(bool looping)
+{
+    if (m_generator == 0) 
+        return -1;
+
+    return syz_setI(m_generator, SYZ_P_LOOPING, looping ? 1 : 0);
+}
+
 syz_Handle CSoundSource::getSourceHandle() const
 {
     return m_source;
@@ -95,4 +78,22 @@ syz_Handle CSoundSource::getSourceHandle() const
 syz_Handle CSoundSource::getGeneratorHandle() const
 {
     return m_generator;
+}
+
+void CSoundSource::releaseHandle(syz_Handle& handle)
+{
+    if (handle != 0)
+    {
+        syz_handleDecRef(handle);
+        handle = 0;
+    }
+}
+
+void CSoundSource::destroy()
+{
+    // generators should be released before sources 
+    releaseHandle(m_generator);
+    releaseHandle(m_source);
+    //context can be set to zero as it is not the owner of the handle
+    m_context = 0;
 }

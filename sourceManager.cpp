@@ -4,11 +4,15 @@
 #include <iostream>
 #include <QSettings>
 #include <QFileInfo>
+#include <QDir>
 #include "initManager.h"
 #include "soundBuffer.h"
+#include "beacon.h"
 
 CSourceManager::CSourceManager()
-    : m_context(0), m_musicSource(nullptr)
+    : m_context(0),
+    m_musicSource(nullptr),
+    m_spatialSource( nullptr )
 {
 }
 
@@ -36,7 +40,17 @@ bool CSourceManager::initialize(syz_Handle context)
         return false;
     }
 
-    return true;
+    //Create spatial source 
+    m_spatialSource= new CSpatialSource(m_context);
+
+    if (!m_spatialSource->isReady())
+    {
+        delete m_spatialSource;
+        m_spatialSource= nullptr;
+        return false;
+    }
+
+return true;
 }
 
 void CSourceManager::destroy()
@@ -68,10 +82,32 @@ int CSourceManager::playMusic()
     std::string fullPath = SOUNDS_PATH + "watermark.mp3";
     m_musicSource->addStream(fullPath);
     m_musicSource->setLooping(true );
-    m_musicSource->setGain( 0.5 );
+    m_musicSource->setGain( 0.1 );
 
 m_musicSource->playStream();
 }
+
+void CSourceManager::playBeacon(CBeacon* beacon )
+{
+    if (beacon == nullptr)
+        return;
+
+    //Get info from beacon
+    QString type = beacon->getSoundType();
+    SourceCategory cat = beacon->getSourceCategory();
+    CSoundBuffer* buffer = m_buffers.value( type, m_buffers.value( "standard" )  );
+    m_spatialSource->attachBuffer(buffer->getNextBuffer() );
+    printf(getLastError().c_str()  );
+    double x, y, z;
+    beacon->getPosition(x, y, z);
+    m_spatialSource->setPosition(x, y, z);
+    m_spatialSource->setPosition(2, 0, 0);
+    m_spatialSource->setLooping(false );
+    //m_spatialSource->setGain(1.0);
+    m_spatialSource->setReferenceDistance(1.0);
+    m_spatialSource->setMaxDistance(1000);
+    m_spatialSource->playBuffer();
+    }
 
 std::string CSourceManager::getLastError() const
 {
@@ -85,39 +121,93 @@ std::string CSourceManager::getLastError() const
     return "No error reported.";
 }
 
-int CSourceManager::loadBuffers()
+int CSourceManager::loadFromINI()
 {
+    //Clear out any existing buffers
+    qDeleteAll(m_buffers);
+    m_buffers.clear();
+    _layersToSoundType.clear();
+
     // Use QSettings to read INI file 
-    QString filePath = QString::fromStdString( SOUNDS_PATH )  +  "sounds.ini";
+    QString baseDir = QString::fromStdString(SOUNDS_PATH);
+    QString filePath = QDir(baseDir).filePath("sounds.ini");
     QSettings settings(filePath, QSettings::IniFormat);
 
+    //Load source types and sound files 
+    loadBuffers(baseDir, settings);
+
+    //Load layer to source type mapping
+    loadLayers(settings);
+
+    return m_buffers.size();
+}
+
+void CSourceManager::loadBuffers(const QString& baseDir, QSettings& settings)
+{
+    //Get source types from settings object 
     settings.beginGroup("soundTypes");
     QStringList keys = settings.allKeys();
 
     for (const QString& key : keys)
     {
-        SoundType type = stringToType(key);
-        QString fileName = settings.value(key).toString();
+        QString type = key.trimmed();
+        const QString filename = settings.value(type).toString().trimmed();
+
+        //Check this sourceType does not already exist
+        if (m_buffers.contains(type))
+        {
+            qDebug() << "SourceType" << type << "already exists in map. Skipping.";
+            continue;
+        }
 
         //Create a buffer 
         CSoundBuffer* buffer = new CSoundBuffer;
-        int numBuffers = buffer->loadBuffers(QString::fromStdString(SOUNDS_PATH) , fileName);
-        if (numBuffers == 0 )
+        int numBuffers = buffer->loadBuffers( baseDir, filename );
+        if (numBuffers == 0)
         {
             delete buffer;
-            qDebug() << "Failed to load buffer for" << key << " =" << fileName;
+            qDebug() << "Failed to load buffer for" << type << " =" << filename;
             continue;
         }
 
         //Put the buffer in the map 
-        m_buffers[type] = buffer;
+        m_buffers.insert(type, buffer);
     }
     settings.endGroup();
-
-    return m_buffers.size();
 }
 
-CSoundBuffer* CSourceManager::getBuffer(SoundType type) const
+void CSourceManager::loadLayers(QSettings& settings)
+{
+    //Get layer to source type mapping from settings object 
+    settings.beginGroup("layers");
+    QStringList keys = settings.allKeys();
+
+    for (const QString& key : keys)
+    {
+        const QString layer = key.trimmed();
+        QString type = settings.value( layer ).toString().trimmed();
+
+        //Check this layer name does not already exist
+        if (_layersToSoundType.contains(layer ))
+        {
+            qDebug() << "Duplicate layer " << layer << "in config file. Skipping." << settings.fileName();
+            continue;
+        }
+
+        // Verify the sound type actually exists
+        if (!m_buffers.contains(type))
+        {
+            qDebug() << "Warning: Layer" << layer << "points to undefined sound type" << type;
+        }
+
+        //Put the layer and type in the map 
+        _layersToSoundType.insert(layer, type );
+    }
+    settings.endGroup();
+}
+
+
+CSoundBuffer* CSourceManager::getBuffer(const QString& type) const
 {
     auto it = m_buffers.find(type);
     if (it != m_buffers.end())
@@ -125,19 +215,4 @@ CSoundBuffer* CSourceManager::getBuffer(SoundType type) const
         return it.value();
     }
     return nullptr;
-}
-
-SoundType CSourceManager::stringToType(const QString& str) const
-{
-    if (str == "standard")       return SoundType::standard;
-    if (str == "city")           return SoundType::city;
-    if (str == "capitalCity")    return SoundType::capitalCity;
-    if (str == "town")           return SoundType::town;
-    if (str == "village")        return SoundType::village;
-    if (str == "hamlet")         return SoundType::hamlet;
-    if (str == "railwayStation") return SoundType::railwayStation;
-    if (str == "latitudeLine")   return SoundType::latitudeLine;
-    if (str == "longitudeLine")  return SoundType::longitudeLine;
-
-    return SoundType::standard; // Default fallback
 }

@@ -56,9 +56,15 @@ int CLandDB::InitialiseLandDatabase(const QString& dbFilename)
     return 0;
 }
 
-void  CLandDB::FreeDatabase()
+
+void CLandDB::FreeDatabase()
 {
-    sqlite3_close(m_LandDB);
+    if (m_LandDB != nullptr)
+    {
+        // Force the connection to teardown even with persistent spatial handles
+        sqlite3_close_v2(m_LandDB);
+        m_LandDB = nullptr;
+    }
 }
 
 bool CLandDB::getLayerData(CLayerManager& layerManager)
@@ -83,12 +89,12 @@ bool CLandDB::getLayerData(CLayerManager& layerManager)
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
         int layerGroupId = sqlite3_column_int(stmt, 0);
-        std::string layerGroupName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string layerGroupName = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)) );
         int layerGroupSelected = sqlite3_column_int(stmt, 2);
         int layerGroupIsBase = sqlite3_column_int(stmt, 3);
         int layerId = sqlite3_column_int(stmt, 4);
-        std::string layerName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-        std::string geometryCategoryName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
+        std::string layerName = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5)) );
+        std::string geometryCategoryName = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6)) );
         int layerSelected = sqlite3_column_int(stmt, 7);
         int displayOrder = sqlite3_column_int(stmt, 8);
         int display = sqlite3_column_int(stmt, 9);
@@ -153,7 +159,7 @@ NRList CLandDB::NameOfOSMLand(double x, double y, int adminLevel)
     rc = 0;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        std::string name =  std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)) );
         double area = sqlite3_column_double(stmt, 1);
         int relationID = sqlite3_column_int(stmt, 2);
         nearbyResult nameResult;
@@ -253,8 +259,8 @@ int CLandDB::GetPolygonFromPoint(double x, double y, QList<CGeoResult>& geoResul
         if (wktlength > 0)
         {
             CGeoResult geoResult;
-            geoResult.m_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            geoResult.m_wkt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            geoResult.m_name = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)) );
+            geoResult.m_wkt = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)) );
             geoResult.m_minX = sqlite3_column_double(stmt, 2);
             geoResult.m_minY = sqlite3_column_double(stmt, 3);
             geoResult.m_maxX = sqlite3_column_double(stmt, 4);
@@ -744,8 +750,8 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
         if (wktlength > 0)
         {
             CGeoResult geoResult;
-            geoResult.m_wkt = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-            geoResult.m_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            geoResult.m_wkt = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)) );
+            geoResult.m_name = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)) );
             geoResult.m_colourIndex = (int)(sqlite3_column_int(stmt, 2));
             geoResult.m_minX = (double)(sqlite3_column_double(stmt, 3));
             geoResult.m_minY = (double)(sqlite3_column_double(stmt, 4));
