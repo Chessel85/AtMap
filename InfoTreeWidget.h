@@ -14,8 +14,12 @@ enum class InfoTreeRoles
     DistanceRole = Qt::UserRole + 1,
     BearingRole,
     midXRole,
-    midYRole
+    midYRole,
+    beaconRole
 };
+
+//Predefines
+class CBeacon;
 
 class CInfoTreeWidget : public QTreeWidget 
 {
@@ -24,21 +28,28 @@ class CInfoTreeWidget : public QTreeWidget
 //Constructor
 public:
     explicit CInfoTreeWidget(QWidget* parent = nullptr);
+    ~CInfoTreeWidget() override;
 
 //Methods
 public:
     void PopulateList(const GLList& layerResults );
 
-    //Slots
-
+    //Overrides
 protected:
     void keyPressEvent(QKeyEvent* event) override;
-    void itemDoubleClicked(QTreeWidgetItem* item);
+
+    //Slots
+protected:
+    void onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+    void onItemDoubleClicked(QTreeWidgetItem* item);
 
 signals:
     void childLocationSelected(const QGeoCoordinate& coordinate);
+    void beaconSelected(CBeacon* beacon);
 
 private:
+    void destroyBeacons();
+    void deleteBeaconsRecursively(QTreeWidgetItem* item);
 
 //Member variables
 private:

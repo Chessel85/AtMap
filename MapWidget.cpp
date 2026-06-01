@@ -108,27 +108,33 @@ void CMapWidget::paintEvent(QPaintEvent* event)
     //painter.setPen(pen );
     painter.setPen(Qt::NoPen);
 
-    //Check lists of polygons and colours are the same length
-    if (m_polygons.size() != m_colourIndices.size())
-    {
-        qWarning() << "MapArea::Paint: Polygon and colour indices lists are not the same length.";
-        return;
-    }
-
     // Iterate through the screen polygons and draw them
-    for( int i = 0; i < m_polygons.size(); i++ )
+    for( int i = 0; i < m_mapData.size(); i++ )
     {
-        QPolygonF polygon = m_polygons[i];
-        int colourIndex = m_colourIndices[i];
+        QPolygonF polygon = m_mapData[i].polygon; 
+        int colourIndex = m_mapData[i].colourIndex;
+        QString layerName = m_mapData[i].layerName;
+
         //If colour index less than zero than probably set in natural earth data migration on purpose so skip
         if (colourIndex < 0)
             continue;
-        if (colourIndex >= m_brushes.size() )
-            colourIndex = 0;
-        if (colourIndex == 0)
-            qWarning() << "Polygon has invalid colour:" << m_colourIndices[i] << " (result index" << i << ")";
-        QBrush brush = m_brushes[colourIndex];  //A safety valve of brush 0 exists in case i == 0
-        painter.setBrush(brush);
+
+        //Treat flightCorridors as a special thing
+        if (layerName == "flightCorridors")
+        {
+            QColor c(colourIndex, colourIndex, colourIndex);
+            QBrush b(c);
+            painter.setBrush(b );
+        }
+        else
+        {
+            if (colourIndex >= m_brushes.size())
+                colourIndex = 0;
+            if (colourIndex == 0)
+                qWarning() << "Polygon has invalid colour:" << colourIndex << " (result index" << i << ")";
+            QBrush brush = m_brushes[colourIndex];  //A safety valve of brush 0 exists in case i == 0
+            painter.setBrush(brush);
+        }
 
         if (polygon.isEmpty())
             continue;
@@ -157,8 +163,7 @@ void CMapWidget::receiveMapData(const QList<CGeoResult>& geoResults, const NRLis
     timer.start();
 
     // Clear previous data
-    m_polygons.clear(); 
-    m_colourIndices.clear();
+    m_mapData.clear();
 
     //Set viewport and screen variables for conversion between the two domains 
     m_geoBottomLeft = bottomLeft;
@@ -176,15 +181,19 @@ m_screenHeight = (double)(this->height());
         for (const QGeoPolygon& geoPolygon : geoResult.m_geoPolygons)
         {
             //Now process this polygon 
-            //Create a screen polygon to populate
-            QPolygonF screenPolygon;
+            MapResult mResult;
             
             //Pass the geopolygon through the transformer to get screen coordinates 
-            transformer.transform(geoPolygon, screenPolygon);
-            m_polygons.append(screenPolygon);
+            transformer.transform(geoPolygon, mResult.polygon);
 
             //Extract the colour index for this result
-            m_colourIndices.append(geoResult.m_colourIndex);
+            mResult.colourIndex = geoResult.m_colourIndex;
+
+            //Get the layer name so can display the data appropriately 
+            mResult.layerName = QString::fromStdString( geoResult.m_layerName );
+
+            //Store the result in the overall map data for drawing 
+            m_mapData.append(mResult);
         }
     }
 
@@ -226,7 +235,7 @@ void CMapWidget::DefineLabelsToDraw(const QList<CGeoResult>& geoResults, CGeoToS
     for (const CGeoResult& geoResult : geoResults)
     {
         //Can continue if not showing this label
-        if (!geoResult.showLabel)
+        if (!geoResult.showLabel  || geoResult.m_layerName == "flightCorridor" )
             continue;
 
         QString labelText = geoResult.m_name.c_str();

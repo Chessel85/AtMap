@@ -14,6 +14,14 @@
 #include "aliases.h"
 #include "GeoToScreen.h"
 
+//struct for results
+struct  MapResult
+{
+    QPolygonF polygon;
+    int colourIndex;
+    QString layerName;
+};
+
 //Structure for labels
 struct labelData 
 {
@@ -56,8 +64,9 @@ private:
 //Member variables
 private:
     // Stores the polygons to draw and their colour index
-    QList<QPolygonF> m_polygons; 
-    QList<int> m_colourIndices;
+    //QList<QPolygonF> m_polygons; 
+    //QList<int> m_colourIndices;
+    QList<MapResult> m_mapData;
 
     //An array of brushes set to 5 colours for filling in the countries
     QVector<QBrush>  m_brushes;

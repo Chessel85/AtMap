@@ -7,6 +7,8 @@
 #include <QMap>
 #include "spatialSource.h"
 #include "soundType.h"
+#include "geoProjection.h"
+#include <QGeoCoordinate >
 
 //Predefines
 class CDirectSource;
@@ -31,14 +33,17 @@ public:
     int playMusic();
     std::string getLastError() const;
     int loadFromINI();
+    void playBeacon(CBeacon* beacon, int maxExtentMetres);
+    void setUserLocation(const double x, const double y);
+
 
 public slots:
-    void playBeacon(CBeacon* beacon);
 
 private:
     void loadBuffers(const QString& baseDir, QSettings& settings);
     void  loadLayers(QSettings& settings);
     CSoundBuffer* getBuffer(const QString& type) const;
+    void calculateSpatialLocation(double& relX, double& relY, double actualX, double actualY, int maxExtent );
 
 //Attributes
 private:
@@ -47,4 +52,6 @@ private:
     CSpatialSource* m_spatialSource;
     QMap<QString, CSoundBuffer*> m_buffers;
     QMap<QString, QString> _layersToSoundType;
+    CGeoProjection m_audioProjection;
+    QGeoCoordinate m_userGeolocation;
 };

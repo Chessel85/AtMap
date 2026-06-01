@@ -65,6 +65,7 @@ set(PROJECT_SOURCES
     LongLat.cpp
     GeoResult.cpp
     GeoToScreen.cpp
+    geoProjection.cpp
     LandDB.cpp
     soundEngine.cpp
     sourceManager.cpp
@@ -97,6 +98,7 @@ set(PROJECT_SOURCES
     LongLat.h
     GeoResult.h
     GeoToScreen.h
+    geoProjection.h
     StepSizes.h
     RedrawReason.h
     LandDB.h

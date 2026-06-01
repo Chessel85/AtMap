@@ -1,13 +1,37 @@
 //InfoTreeWidget.cpp
 #include "InfoTreeWidget.h"
+#include "beacon.h"
 #include <QMap>
 #include <QDebug> // For debugging output
 
 CInfoTreeWidget::CInfoTreeWidget(QWidget* parent)
 : QTreeWidget(parent)
 {
-    //Need to handle double click on an item to move to the location 
-    connect(this, &QTreeWidget::itemDoubleClicked, this, &CInfoTreeWidget::itemDoubleClicked);
+    //connect signal for double clicking an item  which focuses the map on the item 
+    connect(this, &QTreeWidget::itemDoubleClicked,
+        this, &CInfoTreeWidget::onItemDoubleClicked);
+
+    //connect key press or mouse click to change selection  which results in a sound being played 
+    connect(this, &QTreeWidget::currentItemChanged,
+        this, &CInfoTreeWidget::onCurrentItemChanged);
+}
+
+CInfoTreeWidget::~CInfoTreeWidget()
+{
+    destroyBeacons();
+    this->clear();
+}
+
+void CInfoTreeWidget::destroyBeacons()
+{
+    for (int i = 0; i < this->topLevelItemCount(); ++i)
+    {
+        QTreeWidgetItem* topItem = this->topLevelItem(i);
+        if (topItem)
+        {
+            deleteBeaconsRecursively(topItem);
+        }
+    }
 }
 
 void CInfoTreeWidget::PopulateList(const GLList& layerResults)
@@ -19,8 +43,10 @@ void CInfoTreeWidget::PopulateList(const GLList& layerResults)
         QTreeWidgetItem* item = topLevelItem(i);
         savedExpandedState[item->text(0)] = item->isExpanded();
     }
-    //Clear the list and populate with new results 
-    clear();
+
+    //Destroy beacons and clear the list 
+    destroyBeacons();
+    this->clear();
 
     //Iterate through the layers and create a new parent node for each layer and then populate that node 
     for (const geoLayer& layer : layerResults)
@@ -43,15 +69,21 @@ void CInfoTreeWidget::PopulateList(const GLList& layerResults)
             QString bearing = QString("%1").arg(nrResult.bearing, 0, 'f', 1);
             QString itemText = name + ", " + distance + " kilometres at " + bearing + " degrees";
 
+            //Create a beacon
+            CBeacon* beacon = new CBeacon();
+            beacon->initialise("land", SourceCategory::spatial);
+            beacon->setPosition(nrResult.longitude, nrResult.latitude, 0);
+
             //Create a new item and populate with data 
             QTreeWidgetItem* item = new QTreeWidgetItem(topNode);
             item->setText(0, itemText);
 
             //Associate distance, bearing and coordinnates with item 
-            item->setData(0, static_cast<double>(InfoTreeRoles::DistanceRole), QVariant(nrResult.distance));
-            item->setData(0, static_cast<double>(InfoTreeRoles::BearingRole), QVariant(nrResult.bearing));
-            item->setData(0, static_cast<double>(InfoTreeRoles::midXRole), QVariant(nrResult.longitude));
-            item->setData(0, static_cast<double>(InfoTreeRoles::midYRole), QVariant(nrResult.latitude));
+            item->setData(0, static_cast<int>(InfoTreeRoles::DistanceRole), QVariant(nrResult.distance));
+            item->setData(0, static_cast<int>(InfoTreeRoles::BearingRole), QVariant(nrResult.bearing));
+            item->setData(0, static_cast<int>(InfoTreeRoles::midXRole), QVariant(nrResult.longitude));
+            item->setData(0, static_cast<int>(InfoTreeRoles::midYRole), QVariant(nrResult.latitude));
+            item->setData(0, static_cast<int>(InfoTreeRoles::beaconRole), QVariant::fromValue(beacon));
 
             topNode->addChild(item);
         }
@@ -67,8 +99,7 @@ void CInfoTreeWidget::keyPressEvent(QKeyEvent* event)
         if (this->currentItem() != nullptr)
         {
             // Call the same method that handles the double click 
-            QTreeWidgetItem* currentItem = this->currentItem();
-            itemDoubleClicked(currentItem);
+            onItemDoubleClicked(currentItem());
             // Indicate that the event was handled
             event->accept();
             return; // Stop further processing of this event
@@ -78,15 +109,53 @@ void CInfoTreeWidget::keyPressEvent(QKeyEvent* event)
     QTreeWidget::keyPressEvent(event);
 }
 
-void CInfoTreeWidget::itemDoubleClicked(QTreeWidgetItem* item)
+void CInfoTreeWidget::onItemDoubleClicked(QTreeWidgetItem* item)
 {
     //Emit a signal to the main window to move map to new location
     if (item != nullptr)
     {
         double latitude = item->data(0,static_cast<double>(InfoTreeRoles::midYRole)).toDouble();
         double longitude = item->data(0,static_cast<double>(InfoTreeRoles::midXRole)).toDouble();
+        
         const QGeoCoordinate coordinate(latitude, longitude );
         qDebug() << "Location selected:" << item->text(0) << "at" << coordinate;
         emit childLocationSelected(coordinate);
+    }
+}
+
+void CInfoTreeWidget::onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    // if nothing selected do nothing 
+    if (!current)
+        return;
+
+    // Extract the variant payload using the custom role
+    QVariant v = current->data(0, static_cast<int>(InfoTreeRoles::beaconRole));
+
+    if (v.isValid())
+    {
+        // Safely unpack the pointer
+        CBeacon* beacon = v.value<CBeacon*>();
+
+        // Emit the signal up the chain
+        emit beaconSelected(beacon);
+    }
+}
+
+void CInfoTreeWidget::deleteBeaconsRecursively(QTreeWidgetItem* item)
+{
+    if (!item)
+        return;
+
+    QVariant v = item->data(0, static_cast<int>(InfoTreeRoles::beaconRole));
+    if (v.isValid())
+    {
+        CBeacon* oldBeacon = v.value<CBeacon*>();
+        delete oldBeacon;
+    }
+
+    for (int i = 0; i < item->childCount(); ++i)
+    {
+        deleteBeaconsRecursively(item->child(i));
     }
 }

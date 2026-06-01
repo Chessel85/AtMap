@@ -85,6 +85,11 @@ double CMapManager::GetUserY()
     return m_User.GetLocationY();
 }
 
+int CMapManager::getMaxMapExtentMetres() const
+{
+    return m_maxMapDimensionMetres;
+}
+
 void CMapManager::GetBorderingRelations(NRList& relResults)
 {
     double x, y;
@@ -152,6 +157,7 @@ void CMapManager::UpdateMapData(int width, int height, enumRedrawReason redrawRe
 
     int step = int( m_User.GetStepSize() * 1000 );
     m_Transformer.GetGeoBoundingBox(step*scaleX, step*scaleY, m_geoBottomLeft, m_geoTopRight);
+    m_maxMapDimensionMetres = qMax(step * scaleX, step * scaleY);
 
     //Get the polygons and other data that are visible in this area 
     int retval = 0;

@@ -1,45 +1,43 @@
-//Geo2Screen.h
+// GeoToScreen.h
 #pragma once
 
+#include "GeoProjection.h"
 #include <QPolygonF>
 #include <QGeocoordinate.h>
 #include <QGeopolygon.h>
 #include <QPointF>
 #include <QSizeF>
-#include <proj.h>
 
 class CGeoToScreen
 {
-// Constructor
 public:
     CGeoToScreen();
-    ~CGeoToScreen();
+    ~CGeoToScreen() = default;
 
-//Methods 
-public:
-    // return a bounding box given user location and size of step vertically and horizontally 
-    int GetGeoBoundingBox(int stepVertical, int stepHorizontal, QGeoCoordinate& bbBottomLeft, QGeoCoordinate& bbTopRight );
-    void SetScreenSize(const QSizeF& screenSize);
     int CreateProjection(const QGeoCoordinate& centre);
+    void SetScreenSize(const QSizeF& screenSize);
 
-    // Method to transform a polygon from SRID 4326 to screen coordinates
-    int transform(const QGeoPolygon& geoPolygon, QPolygonF& screenPolygon );
-    int transformPoint(const QGeoCoordinate& geoPoint, QPointF& screenPoint);
+    // Mode 1: Establishing the Atlas view boundaries
+    int GetGeoBoundingBox(int stepVertical, int stepHorizontal, QGeoCoordinate& bbBottomLeft, QGeoCoordinate& bbTopRight);
 
-    //Set the internal bounding box  in transformed coordinates from geocoordinates 
-    int setTransformedBoundingBox(const QGeoCoordinate& bottomLeft, const QGeoCoordinate& topRight);
+    // Mode 2: Establishing the tight Single-Country Maximized boundaries
+    int setTransformedBoundingBox(const QGeoCoordinate& geoBottomLeft, const QGeoCoordinate& geoTopRight);
+
+    // Coordinate translation functions used by both modes
+    int transform(const QGeoPolygon& geoPolygon, QPolygonF& screenPolygon) const;
+    int transformPoint(const QGeoCoordinate& geoPoint, QPointF& screenPoint) const;
 
 private:
-    void CreateContext();
-    void DestroyObjects();
-
-    // Member variables
-    PJ_CONTEXT* m_projContext;
-    PJ* m_projTransform; 
-    PJ_COORD m_pjGeoCentre;
-    PJ_COORD m_pjProjBottomLeft;
-    PJ_COORD m_pjProjTopRight;
+    CGeoProjection m_spatialEngine;
     QSizeF m_screenSize;
+
+    // Viewport layout states (stored in raw meters relative to projection center)
+    double m_minX;
+    double m_maxX;
+    double m_minY;
+    double m_maxY;
+
+    // Viewport rendering modifiers
     double m_uniformScale;
     double m_offsetX;
     double m_offsetY;

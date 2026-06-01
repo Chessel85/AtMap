@@ -63,6 +63,7 @@ private slots:
     void onGoToLocationTriggered(); // Slot for the "Go to Location" menu item
     void onSearchLocationTriggered(); // Slot for the "Go to Location" menu item
     void onMapBaseLayerTriggered();  //slot for changing map type 
+    void onPlayBeaconRequested(CBeacon* beacon);
 
 public:
  void onMapClicked(const QPoint& pixelPos, int width, int height);

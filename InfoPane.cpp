@@ -54,6 +54,8 @@ void CInfoPane::SetupConnects()
     //Direct signal from info widget connected to info pane signal so bubbles up directly 
     connect(m_pInfoBorders, &CInfoWidget::beaconSelected,
         this, &CInfoPane::beaconSelected);
+    connect(m_pInfoMap, &CInfoTreeWidget::beaconSelected,
+        this, &CInfoPane::beaconSelected);
 }
 
 void CInfoPane::keyPressEvent(QKeyEvent* event)

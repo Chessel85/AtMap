@@ -1,4 +1,4 @@
-// geoProjection.h
+//geoProjection.h
 #pragma once
 
 #include <QGeocoordinate.h>
@@ -7,30 +7,22 @@
 
 class CGeoProjection
 {
-// Constructor / Destructor
 public:
     CGeoProjection();
     ~CGeoProjection();
 
-// Methods
-public:
-    // Initializes the PROJ transformation centered on the user's location.
-    // Can accept a projection type string like "laea" or "aeqd"
+    // Initializes the projection pipeline centered on the user's location
     int CreateProjection(const QGeoCoordinate& centre, const std::string& projType = "aeqd");
 
-    // Transforms a single geographic point into raw relative meters from the center
-    int ForwardTransform(const QGeoCoordinate& geoPoint, double& outMetersX, double& outMetersY);
+    // Core transformation methods (forward and reverse)
+    int ForwardTransform(const QGeoCoordinate& geoPoint, double& outMetersX, double& outMetersY) const;
+    int ReverseTransform(double metersX, double metersY, QGeoCoordinate& outGeoPoint) const;
 
-    // Convenience method to check if the PROJ pipeline is initialized and valid
-    bool isReady() const;
+    bool isReady() const { return m_projTransform != nullptr; }
 
 private:
-    void CreateContext();
-    void DestroyObjects();
+    void Clear();
 
-// Member variables
-private:
     PJ_CONTEXT* m_projContext;
-    PJ* m_projTransform; 
-    PJ_COORD m_pjGeoCentre;
+    PJ* m_projTransform;
 };

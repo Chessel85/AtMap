@@ -752,14 +752,15 @@ int CLandDB::GetVisibleLandPolygonsWKT(double south, double west, double north, 
             CGeoResult geoResult;
             geoResult.m_wkt = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)) );
             geoResult.m_name = std::string( reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)) );
-            geoResult.m_colourIndex = (int)(sqlite3_column_int(stmt, 2));
-            geoResult.m_minX = (double)(sqlite3_column_double(stmt, 3));
-            geoResult.m_minY = (double)(sqlite3_column_double(stmt, 4));
-            geoResult.m_maxX = (double)(sqlite3_column_double(stmt, 5));
-            geoResult.m_maxY = (double)(sqlite3_column_double(stmt, 6));
-            geoResult.m_labelX = (double)(sqlite3_column_double(stmt, 7));
-            geoResult.m_labelY = (double)(sqlite3_column_double(stmt, 8));
-            geoResult.showLabel= (int)(sqlite3_column_int(stmt, 9));
+            geoResult.m_layerName = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+            geoResult.m_colourIndex = (int)(sqlite3_column_int(stmt, 3));
+            geoResult.m_minX = (double)(sqlite3_column_double(stmt, 4));
+            geoResult.m_minY = (double)(sqlite3_column_double(stmt, 5));
+            geoResult.m_maxX = (double)(sqlite3_column_double(stmt, 6));
+            geoResult.m_maxY = (double)(sqlite3_column_double(stmt, 7));
+            geoResult.m_labelX = (double)(sqlite3_column_double(stmt, 8));
+            geoResult.m_labelY = (double)(sqlite3_column_double(stmt, 9));
+            geoResult.showLabel= (int)(sqlite3_column_int(stmt, 10));
 
             //Add retrieved data to result set 
             geoResults.push_back(geoResult);

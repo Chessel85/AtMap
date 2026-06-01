@@ -15,6 +15,7 @@ class CGeoResult
 public:
     std::string m_wkt;
     std::string m_name;
+    std::string m_layerName;
     QList<QGeoPolygon> m_geoPolygons; // This will be populated by the converter
     int m_colourIndex;
     double m_minX;  //Whole relation bounding box 

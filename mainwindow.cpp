@@ -273,7 +273,7 @@ void MainWindow::SetupConnects()
 
     //Link up info pane play beacons to source manager 
     connect(m_pInfoPane, &CInfoPane::beaconSelected,
-        m_sourceManager, &CSourceManager::playBeacon);
+        this, &MainWindow::onPlayBeaconRequested);
 }
 
 void MainWindow::setupSounds()
@@ -286,8 +286,12 @@ void MainWindow::setupSounds()
         qDebug() << "Failed to initialise sound engine." ;
         return;
     }
+
+    //In the world of sound the listener is always at the centre 
     m_soundEngine->setPosition(0, 0, 0);
-    m_soundEngine->setOrientation(0, 0, -1, 0, 1, 0);
+
+    //Synthizer uses x as east, y as north and z as straight up so set orientation to face due north (along the y axis) and standing upright (z axis)
+    m_soundEngine->setOrientation(0, 1, 0, 0, 0, 1);
 
     m_sourceManager = new CSourceManager;
     bool ok = m_sourceManager->initialize(m_soundEngine->Context());
@@ -306,9 +310,8 @@ void MainWindow::setupSounds()
 
 
     //Play some music
-    m_sourceManager->playMusic();
+    //m_sourceManager->playMusic();
     }
-
 
 void MainWindow::showEvent(QShowEvent* event)
 {
@@ -709,4 +712,16 @@ void MainWindow::syncLayerMenus()
             action->blockSignals(false);
         }
     }
+}
+
+void MainWindow::onPlayBeaconRequested(CBeacon* beacon)
+{
+    //Get largest extent of map pin metres from map data
+    int maxExtent = m_pMapManager->getMaxMapExtentMetres();
+
+    //set user location
+    m_sourceManager->setUserLocation(m_pMapManager->GetUserX(), m_pMapManager->GetUserY());
+
+    // Play the sound with the layout bounds included
+    m_sourceManager->playBeacon(beacon, maxExtent);
 }

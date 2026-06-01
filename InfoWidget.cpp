@@ -62,7 +62,7 @@ void CInfoWidget::PopulateList(const NRList& relResults )
         item->setData(static_cast<int>(InfoRoles::midXRole), QVariant(nearbyResult.longitude));
         item->setData(static_cast<int>(InfoRoles::midYRole), QVariant(nearbyResult.latitude));
         item->setData(static_cast<int>(InfoRoles::beaconRole), QVariant::fromValue(beacon));
-            }
+    }
 }
 
 void CInfoWidget::keyPressEvent(QKeyEvent* event)

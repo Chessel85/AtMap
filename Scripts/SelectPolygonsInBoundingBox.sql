@@ -10,6 +10,7 @@ SELECT
         )
     ),
     p.name,
+    l.layerName, 
     p.mapColour,
     MbrMinX( p.polygon ), 
     MbrMinY( p.polygon ), 

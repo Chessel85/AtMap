@@ -35,6 +35,7 @@ public:
     bool stepAtMin();
     double GetUserX();
     double GetUserY();
+    int getMaxMapExtentMetres() const;
     void GetBorderingRelations(NRList& relResults );
     void GetContainedPoints(NRList& pointResults);
     double Distance(QGeoCoordinate& targetCoordinate);
@@ -73,4 +74,5 @@ private:
     QGeoCoordinate m_geoTopRight;
     CGeoToScreen m_Transformer;
     int m_objectID;
+    int m_maxMapDimensionMetres;
 };
